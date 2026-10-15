@@ -169,8 +169,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Semantic OS Simulator v0.1")
     parser.add_argument("--state", default="semantic_os_state.json")
     parser.add_argument("--demo", action="store_true")
+    parser.add_argument("--engine", choices=["mock", "llm-sem"], default="mock")
+    parser.add_argument("--llm-sem-root", default=None)
+    parser.add_argument("--llm-sem-model", default=None, help="Checkpoint path relative to sibling LLM_SEM")
     args = parser.parse_args()
-    osys = SemanticOS()
+    engine = None
+    if args.engine == "llm-sem":
+        from llm_sem_adapter import LLMSemAdapter
+        engine = LLMSemAdapter(root=args.llm_sem_root, model_path=args.llm_sem_model)
+        print(f"LLM_SEM connected: {engine.root} | model={'loaded' if engine.model is not None else 'not loaded'}")
+    osys = SemanticOS(engine=engine)
     state_path = Path(args.state)
     if state_path.exists():
         osys.load(state_path)
@@ -183,10 +191,16 @@ def main() -> None:
             print(f"> {command}\n[{result.vm}/{result.state}] {result.result}")
         return
     print("Semantic OS Simulator v0.1 — dummy VMs, mock semantic engine")
-    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /exit")
+    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /exit")
     try:
         while True:
             request = input("SemanticOS> ").strip()
+            if request.startswith("/ndc "):
+                if not hasattr(osys.engine, "classify"):
+                    print("NDC classification requires --engine llm-sem")
+                else:
+                    print(json.dumps(osys.engine.classify(request[5:]), ensure_ascii=False))
+                continue
             if request == "/exit":
                 break
             if request:
