@@ -64,7 +64,7 @@ class LLMSemAdapter:
         ids = ids[-self.model.context_length:]
         inputs = self.torch.tensor([ids], dtype=self.torch.long, device=self.device)
         with self.torch.no_grad():
-            v = self.model.semantic_vector(inputs, pooling="mean")[0]
+            v = self.model.encode_semantic(inputs, pooling="mean")[0]
             v = self.torch.nn.functional.normalize(v, p=2, dim=0)
         return v
 
