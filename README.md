@@ -107,3 +107,9 @@ Interactive diagnosis:
 
 The `/route` command reports selected dummy VM, method, raw cosine scores, and ranking. It does **not** execute an operation or train model weights. Because semantic vectors are raw model representations, assess scores before relying on them. Semantic routing of ordinary requests only affects which dummy VM is annotated as executing the operation; it does not provide a VM workload executor.
 
+
+## v0.3.1 provisional Unknown Gate
+
+In response to the first real-checkpoint four-probe run, default thresholds were provisionally changed to cosine >= 0.80 and first-to-second margin >= 0.10. Low-confidence non-command requests now enter process state `HELD` with `selected=null`; they are **not** sent to an unrelated dummy VM. Slash commands retain deterministic round-robin.
+
+**Caution:** These four observed examples are insufficient to calibrate a meaningful Unknown Gate. This is a safety-oriented prototype behavior, not established classification accuracy. Evaluate larger independent held-out known and unknown datasets before setting stable thresholds. The command `/route TEXT` reports the proposed destination or hold and does not execute a process.
