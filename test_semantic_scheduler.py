@@ -33,5 +33,32 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             scheduler.route("/status", [SimpleNamespace(name="VM-A", online=False)])
 
+    def test_known_routes_and_unknown_hold(self):
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("PyTorch unavailable")
+        class Engine:
+            model = object()
+            def vector(self, text):
+                index = 0 if text.startswith("量子力学") or text.startswith("量子") else (
+                    1 if "CUDA" in text or "GPU" in text else (
+                    2 if "文学" in text else 3))
+                vectors = [
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 0.0, 1.0],
+                    [0.57735, 0.57735, 0.57735],
+                ]
+                return torch.tensor(vectors[index])
+        scheduler = SemanticScheduler(Engine())
+        vms = [SimpleNamespace(name=n, online=True) for n in ("VM-A", "VM-B", "VM-C")]
+        self.assertEqual(scheduler.route("量子力学", vms).selected, "VM-A")
+        self.assertEqual(scheduler.route("CUDA", vms).selected, "VM-B")
+        self.assertEqual(scheduler.route("日本文学", vms).selected, "VM-C")
+        held = scheduler.route("未登録", vms)
+        self.assertIsNone(held.selected)
+        self.assertEqual(held.method, "unknown_hold")
+
 if __name__ == "__main__":
     unittest.main()
