@@ -1,2 +1,72 @@
-# SEMOS_SIM
-Semantic OS シムレータ
+# SEMOS_SIM — Semantic OS Simulator v0.1
+
+Python prototype of the **Semantic OS control plane** for future use with [LLM_SEM](https://github.com/digiponta/LLM_SEM).
+
+**Important:** All three VMs are **dummy Python objects**, not actual virtual machines. The current semantic engine is a **mock**, not LLM_SEM neural inference. The `/sleep` command only records simulated internalization markers; it **does not train model weights**.
+
+## Requirements
+
+- Python 3.13 (also compatible with modern Python 3.10+)
+- No external Python packages
+- No Hyper-V, VMware, Docker, or virtualization requirement
+
+## Quick start (PowerShell)
+
+```powershell
+git clone https://github.com/digiponta/SEMOS_SIM.git
+cd SEMOS_SIM
+python semantic_os.py --demo
+python -m unittest -v test_semantic_os.py
+python semantic_os.py
+```
+
+## Interactive example
+
+```text
+/teach 量子センサー | は | 量子現象を利用するセンサー
+/approve 量子センサー|は|量子現象を利用するセンサー
+量子センサーとは
+/sync
+/sleep
+/status
+/memory
+/exit
+```
+
+`/teach` places knowledge in pending memory; `/approve` promotes it to canonical memory with an **UNVERIFIED** label. `/sync` copies canonical facts to online dummy VM replicas when at least two of three are online. `/sleep` simulates consolidation without touching LLM weights.
+
+## Architecture
+
+```text
+User / Agent
+  |
+Semantic OS Kernel (intent routing, process table, unknown gate)
+  |
+SemanticEngine protocol
+  +-- MockSemanticEngine (implemented in v0.1)
+  +-- LLM_SEM adapter (planned)
+  |
+Canonical / Pending Semantic Memory
+  |
+Dummy VM Manager (Python objects; no virtualization)
+  +-- VM-A
+  +-- VM-B
+  +-- VM-C
+  |
+Simulated /sync and /sleep, audit records
+```
+
+## Future work
+
+- Connect actual LLM_SEM semantic vectors and NDC routing via the `SemanticEngine` adapter.
+- Use semantic scoring to schedule requests.
+- Add VM-failure, network-partition, versioning and reconciliation experiments.
+- Implement separately validated, opt-in LLM_SEM `/sleep` weight updates with rollback.
+
+**Research boundary:** The two-of-three online check is not Raft or distributed consensus; there is no real GPU model execution, isolation, VM networking, or truth verification.
+
+## Files
+
+- `semantic_os.py`: simulator and interactive CLI
+- `test_semantic_os.py`: five unit tests
+- `README.md`: this documentation
