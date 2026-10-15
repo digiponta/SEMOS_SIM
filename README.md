@@ -84,3 +84,26 @@ python -m unittest -v test_llm_sem_adapter.py
 ```
 
 The optional adapter loads LLM_SEM's real `ndc.py` keyword classification; with an explicit checkpoint it also uses `LanguageModel.semantic_vector(pooling="mean")` for experimental cosine retrieval. The threshold is not calibrated. This is **not** the stable NDC neural router or an actual `/sleep` training integration. Checkpoint files may be absent locally. No LLM_SEM files are edited.
+
+## v0.3 experimental Semantic Scheduler
+
+The optional scheduler computes normalized mean-pooled checkpoint vectors for the incoming request and three dummy-VM capability descriptions in `semantic_scheduler.py`. It selects the best online dummy VM only if the uncalibrated cosine is >= 0.85 and the gap to second place is >= 0.04. Otherwise it falls back to round-robin among online VMs. All slash commands also fall back. These thresholds are **illustrative, not validated**.
+
+```powershell
+git pull origin main
+python -m unittest -v test_semantic_scheduler.py test_llm_sem_adapter.py test_semantic_os.py
+python semantic_os.py --engine llm-sem --llm-sem-model model/model-sem-internalized-v01575.pt --scheduler semantic
+```
+
+Interactive diagnosis:
+
+```text
+/route 量子力学
+/route CUDAによるGPU計算
+/route 日本文学
+/route 未知の話題
+/exit
+```
+
+The `/route` command reports selected dummy VM, method, raw cosine scores, and ranking. It does **not** execute an operation or train model weights. Because semantic vectors are raw model representations, assess scores before relying on them. Semantic routing of ordinary requests only affects which dummy VM is annotated as executing the operation; it does not provide a VM workload executor.
+
