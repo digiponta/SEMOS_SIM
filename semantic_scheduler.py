@@ -1,6 +1,6 @@
 """Experimental semantic scheduler for dummy VM capabilities.
 
-Cosine similarities are uncalibrated; fallback is conservative round-robin.
+Cosine similarities are uncalibrated; low-confidence requests are held for review.
 No actual VM, hypervisor, or privileged execution is involved.
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ class Route:
         return asdict(self)
 
 class SemanticScheduler:
-    def __init__(self, engine, *, min_similarity=0.85, min_margin=0.04):
+    def __init__(self, engine, *, min_similarity=0.80, min_margin=0.10):
         if getattr(engine, "model", None) is None:
             raise ValueError("Semantic scheduler requires real LLM_SEM checkpoint")
         self.engine = engine
@@ -55,10 +55,13 @@ class SemanticScheduler:
         if confident:
             selected = scores[0]["vm"]
             method = "semantic"
-        else:
+        elif request.lstrip().startswith("/"):
             selected = online[self.round_robin_index % len(online)].name
             self.round_robin_index += 1
             method = "round_robin_fallback"
+        else:
+            selected = None
+            method = "unknown_hold"
         self.last_route = Route(selected, method, best, margin, scores)
         return self.last_route
 
