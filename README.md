@@ -70,3 +70,17 @@ Simulated /sync and /sleep, audit records
 - `semantic_os.py`: simulator and interactive CLI
 - `test_semantic_os.py`: five unit tests
 - `README.md`: this documentation
+
+## LLM_SEM sibling integration (experimental)
+
+From SEMOS_SIM with a sibling `..\\LLM_SEM` checkout:
+
+```powershell
+python semantic_os.py --engine llm-sem
+# Interactive command: /ndc 量子力学
+# To enable REAL checkpoint hidden-state vectors (requires torch and model files):
+python semantic_os.py --engine llm-sem --llm-sem-model model/model-sem-internalized-v01575.pt
+python -m unittest -v test_llm_sem_adapter.py
+```
+
+The optional adapter loads LLM_SEM's real `ndc.py` keyword classification; with an explicit checkpoint it also uses `LanguageModel.semantic_vector(pooling="mean")` for experimental cosine retrieval. The threshold is not calibrated. This is **not** the stable NDC neural router or an actual `/sleep` training integration. Checkpoint files may be absent locally. No LLM_SEM files are edited.
