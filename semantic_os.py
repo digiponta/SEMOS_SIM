@@ -64,8 +64,9 @@ class DummyVM:
     internalized_keys: set[str] = field(default_factory=set)
 
 class SemanticOS:
-    def __init__(self, engine: SemanticEngine | None = None):
+    def __init__(self, engine: SemanticEngine | None = None, scheduler=None):
         self.engine = engine or MockSemanticEngine()
+        self.scheduler = scheduler
         self.vms = [DummyVM("VM-A"), DummyVM("VM-B"), DummyVM("VM-C")]
         self.canonical: dict[str, Fact] = {}
         self.pending: dict[str, Fact] = {}
@@ -76,8 +77,12 @@ class SemanticOS:
 
     def _run(self, request: str, intent: str, operation) -> Process:
         # Dummy VM scheduling only: no hypervisor, container, or subprocess.
-        vm = self.vms[self.next_vm % len(self.vms)]
-        self.next_vm += 1
+        if self.scheduler is not None:
+            route = self.scheduler.route(request, self.vms)
+            vm = next(vm for vm in self.vms if vm.name == route.selected)
+        else:
+            vm = self.vms[self.next_vm % len(self.vms)]
+            self.next_vm += 1
         self.pid += 1
         proc = Process(self.pid, request, intent, "RUNNING", vm.name)
         self.processes.append(proc)
@@ -169,6 +174,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Semantic OS Simulator v0.1")
     parser.add_argument("--state", default="semantic_os_state.json")
     parser.add_argument("--demo", action="store_true")
+    parser.add_argument("--scheduler", choices=["round-robin", "semantic"], default="round-robin")
     parser.add_argument("--engine", choices=["mock", "llm-sem"], default="mock")
     parser.add_argument("--llm-sem-root", default=None)
     parser.add_argument("--llm-sem-model", default=None, help="Checkpoint path relative to sibling LLM_SEM")
@@ -178,7 +184,13 @@ def main() -> None:
         from llm_sem_adapter import LLMSemAdapter
         engine = LLMSemAdapter(root=args.llm_sem_root, model_path=args.llm_sem_model)
         print(f"LLM_SEM connected: {engine.root} | model={'loaded' if engine.model is not None else 'not loaded'}")
-    osys = SemanticOS(engine=engine)
+    scheduler = None
+    if args.scheduler == "semantic":
+        if engine is None or getattr(engine, "model", None) is None:
+            parser.error("--scheduler semantic requires --engine llm-sem --llm-sem-model MODEL")
+        from semantic_scheduler import SemanticScheduler
+        scheduler = SemanticScheduler(engine)
+    osys = SemanticOS(engine=engine, scheduler=scheduler)
     state_path = Path(args.state)
     if state_path.exists():
         osys.load(state_path)
@@ -191,10 +203,20 @@ def main() -> None:
             print(f"> {command}\n[{result.vm}/{result.state}] {result.result}")
         return
     print(f"Semantic OS Simulator v0.2 — dummy VMs | engine={args.engine} | model={'loaded' if getattr(osys.engine, 'model', None) is not None else 'not loaded'}")
-    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /vector TEXT, /similarity A | B, /exit")
+    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /vector TEXT, /similarity A | B, /route TEXT, /exit")
     try:
         while True:
             request = input("SemanticOS> ").strip()
+            if request.startswith("/route "):
+                if osys.scheduler is None:
+                    print("ERROR: Route diagnostics require --scheduler semantic")
+                else:
+                    try:
+                        print(json.dumps(osys.scheduler.route(request[7:].strip(), osys.vms).as_dict(),
+                                         ensure_ascii=False))
+                    except Exception as exc:
+                        print(f"ERROR: {exc}")
+                continue
             if request.startswith("/vector "):
                 if not hasattr(osys.engine, "vector"):
                     print("ERROR: Vector requires --engine llm-sem --llm-sem-model MODEL")
