@@ -21,5 +21,21 @@ class AdapterSmokeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             adapter.vector("量子力学")
 
+    def test_real_checkpoint_vector_when_available(self):
+        root = Path(__file__).resolve().parent.parent / "LLM_SEM"
+        checkpoint = root / "model/model-sem-internalized-v01575.pt"
+        tokenizer = root / "model/tokenizer.json"
+        if not checkpoint.is_file() or not tokenizer.is_file():
+            self.skipTest("Real LLM_SEM checkpoint or tokenizer not available")
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("PyTorch not installed")
+        adapter = LLMSemAdapter(root=root, model_path=checkpoint, device="cpu")
+        vector = adapter.vector("量子力学")
+        self.assertEqual(vector.ndim, 1)
+        self.assertEqual(vector.numel(), adapter.model.d_model)
+        self.assertAlmostEqual(float(vector.norm().item()), 1.0, places=5)
+
 if __name__ == "__main__":
     unittest.main()
