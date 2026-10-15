@@ -79,6 +79,12 @@ class SemanticOS:
         # Dummy VM scheduling only: no hypervisor, container, or subprocess.
         if self.scheduler is not None:
             route = self.scheduler.route(request, self.vms)
+            if route.selected is None:
+                self.pid += 1
+                proc = Process(self.pid, request, intent, "HELD", "-", "UNKNOWN_GATE: low-confidence semantic route")
+                self.processes.append(proc)
+                self.audit.append(asdict(proc))
+                return proc
             vm = next(vm for vm in self.vms if vm.name == route.selected)
         else:
             vm = self.vms[self.next_vm % len(self.vms)]
@@ -202,7 +208,7 @@ def main() -> None:
             result = osys.submit(command)
             print(f"> {command}\n[{result.vm}/{result.state}] {result.result}")
         return
-    print(f"Semantic OS Simulator v0.2 — dummy VMs | engine={args.engine} | model={'loaded' if getattr(osys.engine, 'model', None) is not None else 'not loaded'}")
+    print(f"Semantic OS Simulator v0.3 — dummy VMs | engine={args.engine} | model={'loaded' if getattr(osys.engine, 'model', None) is not None else 'not loaded'}")
     print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /vector TEXT, /similarity A | B, /route TEXT, /exit")
     try:
         while True:
