@@ -190,11 +190,42 @@ def main() -> None:
             result = osys.submit(command)
             print(f"> {command}\n[{result.vm}/{result.state}] {result.result}")
         return
-    print("Semantic OS Simulator v0.1 — dummy VMs, mock semantic engine")
-    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /exit")
+    print(f"Semantic OS Simulator v0.2 — dummy VMs | engine={args.engine} | model={'loaded' if getattr(osys.engine, 'model', None) is not None else 'not loaded'}")
+    print("Commands: /teach S | P | O, /approve S|P|O, /sync, /sleep, /memory, /status, /ndc TEXT, /vector TEXT, /similarity A | B, /exit")
     try:
         while True:
             request = input("SemanticOS> ").strip()
+            if request.startswith("/vector "):
+                if not hasattr(osys.engine, "vector"):
+                    print("ERROR: Vector requires --engine llm-sem --llm-sem-model MODEL")
+                else:
+                    try:
+                        v = osys.engine.vector(request[8:].strip())
+                        print(json.dumps({"dimension": int(v.numel()),
+                                          "norm": float(v.norm().item()),
+                                          "first8": v[:8].detach().cpu().tolist(),
+                                          "source": "LLM_SEM checkpoint; mean pooling"},
+                                         ensure_ascii=False))
+                    except Exception as exc:
+                        print(f"ERROR: {exc}")
+                continue
+            if request.startswith("/similarity "):
+                if not hasattr(osys.engine, "vector"):
+                    print("ERROR: Similarity requires --engine llm-sem --llm-sem-model MODEL")
+                else:
+                    try:
+                        terms = [t.strip() for t in request[len("/similarity "):].split("|")]
+                        if len(terms) != 2 or not all(terms):
+                            raise ValueError("Usage: /similarity TEXT_A | TEXT_B")
+                        import torch
+                        a, b = (osys.engine.vector(t) for t in terms)
+                        print(json.dumps({"cosine": float(torch.dot(a, b).item()),
+                                          "texts": terms,
+                                          "note": "Raw, uncalibrated model cosine"},
+                                         ensure_ascii=False))
+                    except Exception as exc:
+                        print(f"ERROR: {exc}")
+                continue
             if request.startswith("/ndc "):
                 if not hasattr(osys.engine, "classify"):
                     print("NDC classification requires --engine llm-sem")
