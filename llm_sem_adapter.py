@@ -1,6 +1,7 @@
 """Optional real LLM_SEM adapter. Loads sibling repository, never modifies it."""
 from __future__ import annotations
 import importlib.util
+import sys
 from pathlib import Path
 from semantic_os import Decision, MockSemanticEngine
 
@@ -9,6 +10,7 @@ def _load_module(name, path):
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot import {path}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
