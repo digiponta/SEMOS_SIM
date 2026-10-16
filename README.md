@@ -113,3 +113,17 @@ The `/route` command reports selected dummy VM, method, raw cosine scores, and r
 In response to the first real-checkpoint four-probe run, default thresholds were provisionally changed to cosine >= 0.80 and first-to-second margin >= 0.10. Low-confidence non-command requests now enter process state `HELD` with `selected=null`; they are **not** sent to an unrelated dummy VM. Slash commands retain deterministic round-robin.
 
 **Caution:** These four observed examples are insufficient to calibrate a meaningful Unknown Gate. This is a safety-oriented prototype behavior, not established classification accuracy. Evaluate larger independent held-out known and unknown datasets before setting stable thresholds. The command `/route TEXT` reports the proposed destination or hold and does not execute a process.
+
+## v0.4 First-stage quantitative evaluation
+
+`benchmark_v040.py` measures routing accuracy over known cases (with holds counted as misses), known coverage, selective accuracy, unknown reject rate and precision, latency, and a four-way confusion matrix. Supported comparisons: keyword rules, character n-gram TF-IDF, LLM_SEM checkpoint vectors (no gate), and LLM_SEM vectors with the current SEMOS_SIM Unknown Gate.
+
+```powershell
+python -m unittest -v test_benchmark_v040.py
+python benchmark_v040.py --train data/dev_train_v040.csv --test data/dev_test_v040.csv --model model/model-sem-internalized-v01575.pt
+```
+
+Results go to `results/benchmark_v040.json`. You can run without `--model` for the two CPU baselines.
+
+**Important:** Both bundled CSV files are small, hand-authored **development fixtures**, not a scientifically independent holdout. Do not report their scores as generalization results. For an independent experiment, prepare separate frozen training/validation/test CSV files with columns `text,label` and labels `VM-A`, `VM-B`, `VM-C`, `UNKNOWN`. Target approximately 100 final test cases per label; sample before viewing model predictions, avoid paraphrase duplicates across splits, document dataset provenance, and calibrate thresholds only using the validation set. The runner currently checks only exact overlap and does **not** tune thresholds. The LLM_SEM vector baselines use the same fixed capability profiles, rather than a separately trained embedding model.
+
