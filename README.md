@@ -352,3 +352,13 @@ python analyze_router_gate_ablation_v0512.py --input results/nested_traces_v0511
 ```
 
 Separates candidate VM classification accuracy (router-only) from the observed final safety gate. The router-only condition intentionally routes every UNKNOWN request, and an additional gold-label-based oracle measures a theoretical upper-bound decomposition **only**: neither is deployable. Input is verified v0.5.11 trace; no embedding recomputation, changes to frozen settings, guard tuning, final holdout access, or 2 Copies in 3 replication exercise.
+
+## v0.5.14 — Exploratory selective-rescue sensitivity
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_selective_rescue_v0514.py
+python evaluate_selective_rescue_v0514.py --input results/nested_traces_v0511.json --output results/selective_rescue_v0514.json
+```
+
+Tests five illustrative, predeclared candidate rules against the **already-exposed** v0.5.11 diagnostic trace, plus a no-rescue baseline. It reports known routing accuracy, known coverage, selective accuracy, unknown rejection and the added correct/wrong/UNKNOWN accepts. The sweep is diagnostic: it does **not** select a winning threshold, modify the deployed gate or provide an independent result. Compare against **provisional** engineering goals (known accuracy >=70%, coverage >=80%, unknown rejection >=95%) without treating them as guaranteed statistical expectations. The QHA LLM_SEM **2 Copies in 3** synchronization mechanism remains outside this simulator evaluation.
