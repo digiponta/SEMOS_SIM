@@ -362,3 +362,13 @@ python evaluate_selective_rescue_v0514.py --input results/nested_traces_v0511.js
 ```
 
 Tests five illustrative, predeclared candidate rules against the **already-exposed** v0.5.11 diagnostic trace, plus a no-rescue baseline. It reports known routing accuracy, known coverage, selective accuracy, unknown rejection and the added correct/wrong/UNKNOWN accepts. The sweep is diagnostic: it does **not** select a winning threshold, modify the deployed gate or provide an independent result. Compare against **provisional** engineering goals (known accuracy >=70%, coverage >=80%, unknown rejection >=95%) without treating them as guaranteed statistical expectations. The QHA LLM_SEM **2 Copies in 3** synchronization mechanism remains outside this simulator evaluation.
+
+## v0.5.15 — Router vs Gate failure-feature diagnosis
+
+```powershell
+git pull origin main
+python -m unittest -v test_analyze_feature_failures_v0515.py
+python analyze_feature_failures_v0515.py --input results/nested_traces_v0511.json --output results/feature_failure_analysis_v0515.json
+```
+
+Summarizes similarity, margin, contrast and known/unknown distances for correct routing, candidate VM errors, false gate rejects, and UNKNOWN errors, including VM-specific aggregates. **Exploratory descriptive analysis only**: no target optimization, learning, independent holdout or 2 Copies in 3 testing. The v0.5.13 target goals remain provisional and are not new measured outcomes.
