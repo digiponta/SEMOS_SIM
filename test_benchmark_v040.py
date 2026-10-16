@@ -21,6 +21,21 @@ class BenchmarkTests(unittest.TestCase):
                   {"text":"文学 作文","label":"VM-C"}]
         model=TFIDFRouter(examples)
         self.assertIn(model.predict("CUDA GPU"),("VM-B","UNKNOWN"))
+    def test_cp932_csv(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"japanese.csv"
+            path.write_bytes("text,label\n量子力学,VM-A\n".encode("cp932"))
+            rows=load_csv(path)
+            self.assertEqual(rows[0]["text"],"量子力学")
+            self.assertEqual(rows[0]["label"],"VM-A")
+
+    def test_utf8_bom_csv(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"japanese.csv"
+            path.write_text("text,label\n物理,VM-A\n",encoding="utf-8-sig")
+            rows=load_csv(path)
+            self.assertEqual(rows[0]["text"],"物理")
+
     def test_csv_validation(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"x.csv"
