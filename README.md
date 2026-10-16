@@ -524,3 +524,16 @@ python simulate_hitl_review_v0529.py --input results/user_authorized_rr_v0526.js
 ```
 
 This is only the first v0.5.29 protocol milestone. Real response payload validation, user feedback UI, durable authorization, automated rerouting and contract checking remain future work.
+
+## v0.5.29.1 — HITL answer packets and no-repeat retry handoff
+
+```powershell
+git pull origin main
+python -m unittest -v test_prepare_hitl_packets_v05291.py
+python prepare_hitl_packets_v05291.py --input results/user_authorized_rr_v0526.json --output results/hitl_packets_v05291.json
+# Optional: manually supplied answer payload CSV: request_id,question,answer
+# Optional: review CSV: request_id,decision (APPROVE/REJECT/RETRY/DISCOVERY)
+python prepare_hitl_packets_v05291.py --input results/user_authorized_rr_v0526.json --payload-file data/hitl_answers_v05291.csv --review-file data/hitl_reviews_v05291.csv --output results/hitl_packets_reviewed_v05291.json
+```
+
+Missing question/answer => `AWAITING_ANSWER_PAYLOAD`, and an explicit review decision in that state is rejected. Supplied answers appear as `PENDING_USER_REVIEW` until a genuine decision is given. `RETRY` selects a **not-yet-contacted VM** based on source routing events, with no VM execution and no synthesized replacement answer. If all VMs were previously contacted, it transitions to Discovery. This is a protocol simulation only, not a UI and not real VM responses. Do not treat CSV fixtures as genuine human evaluations unless they are supplied by the human.
