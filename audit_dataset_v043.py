@@ -6,7 +6,7 @@ from pathlib import Path
 from benchmark_v040 import load_csv,LABELS
 
 def normalized(text):
-    return re.sub(r"[\\W_]+","",unicodedata.normalize("NFKC",text).casefold())
+    return "".join(ch for ch in unicodedata.normalize("NFKC",text).casefold() if ch.isalnum())
 
 def bigrams(text):
     t=normalized(text)
