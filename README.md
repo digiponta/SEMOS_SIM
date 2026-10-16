@@ -490,3 +490,13 @@ python simulate_user_rr_v0526.py --input results/and_or_gate_v0523.json --approv
 ```
 
 **Limitations:** Synthetic VM responder still reads gold labels. Simulates no actual VM or effects. Default zero-error behavior is an idealized upper bound. Fault simulation: `--false-accept 0.10 --false-reject 0.10` with a *different* output path. RR probe start changes per **approved Gate rejection**, not per request. Already-exposed examples are exploratory only.
+
+## v0.5.27 — VM capability error robustness
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_vm_robustness_v0527.py
+python evaluate_vm_robustness_v0527.py --input results/and_or_gate_v0523.json --approval-file data/user_rr_approvals.csv --output results/vm_capability_robustness_v0527.json
+```
+
+Ten predeclared false-accept / false-reject scenarios at 0/5/10/20% (single-axis and paired), 200 paired deterministic pseudo-random replicates each. Reports mean/min/max of outcomes and probe counts. **This is a sensitivity model with synthetic gold-aware responders** and previously inspected test cases, not independently validated real-VM error rates or evidence for deployment. Same explicit approval CSV from v0.5.26; absent approval means deny.
