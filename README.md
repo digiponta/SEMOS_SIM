@@ -322,3 +322,13 @@ python evaluate_nested_topic_gate_v059.py --development data/validation_v043_dev
 ```
 
 Outer 5-fold topic-group CV reserves whole topics, while inner 3-fold group CV selects a contrast-distance rejection threshold using only outer-train examples. Candidate scores are VM-aware, comparing distance to known and unknown feature centroids. Reports unknown false acceptance with descriptive Wilson 95% interval and reports whether each inner estimate satisfies the empirical 5% budget. **No claim of 5% statistical upper bound is made** with tiny UNKNOWN samples. Frozen v0.5.3 and previously evaluated candidate 400 samples remain unchanged. Reference is development-fitted, therefore not a fair untouched benchmark. A new, independent benchmark remains necessary.
+
+## v0.5.10 — Post-nested-CV error analysis
+
+```powershell
+git pull origin main
+python -m unittest -v test_diagnose_nested_topic_v0510.py
+python diagnose_nested_topic_v0510.py --input results/nested_topic_gate_v059.json --output results/nested_diagnosis_v0510.json
+```
+
+Aggregates the v0.5.9 JSON only: by-class confusion, topic-group accuracy and rejects, 5-fold cutoff spread, each UNKNOWN false accept, and known demands held as UNKNOWN. Pure diagnosis; no change to model, weights, guard or the earlier 400 synthetic examples. v0.5.9 JSON does not include each example's raw contrast score, so score distributions and calibration reliability cannot be audited from this artifact; that requires a separate, independently validated instrumentation run.
