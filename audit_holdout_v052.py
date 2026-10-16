@@ -7,7 +7,7 @@ from __future__ import annotations
 import argparse,json,unicodedata
 from pathlib import Path
 from benchmark_v040 import load_csv
-from audit_dataset_v043 import normalize,similarity
+from audit_dataset_v043 import normalized,bigrams,jaccard
 
 DEFAULT_REFERENCES=["data/dev_train_v040.csv","data/dev_test_v040.csv",
                     "data/validation_v043_dev100.csv","data/my_validation.csv"]
@@ -20,13 +20,13 @@ def audit_holdout(holdout, reference_paths, near_threshold=.8):
             refs.extend((path,r) for r in load_csv(path))
     exact=[];near=[];seen={}
     for i,row in enumerate(target):
-        key=normalize(row["text"])
+        key=normalized(row["text"])
         if key in seen:
             exact.append({"holdout_index":i+1,"other":"holdout","other_index":seen[key]})
         seen[key]=i+1
         for source,ref in refs:
-            similarity_value=similarity(row["text"],ref["text"])
-            if key==normalize(ref["text"]):
+            similarity_value=jaccard(bigrams(row["text"]),bigrams(ref["text"]))
+            if key==normalized(ref["text"]):
                 exact.append({"holdout_index":i+1,"other":source,"text":row["text"]})
             elif similarity_value>=near_threshold:
                 near.append({"holdout_index":i+1,"other":source,
