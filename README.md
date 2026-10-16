@@ -393,3 +393,13 @@ python prepare_prospective_eval_v0517.py --prospective data/prospective_new_unse
 ```
 
 The prospective CSV **is not included**: create one without consulting previously used development or exposed candidate holdout cases. The validator checks required columns, class labels, exact normalized text duplicates/overlap with v0.5.11 development trace, and SHA-256 hashes; it does **not** run an ML benchmark, prove paraphrase or topic independence, change the frozen router, or evaluate QHA's 2 Copies in 3. Previously reported AUC and accuracy remain exploratory.
+
+## v0.5.18 — Frozen synthetic prospective routing comparison
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_prospective_v0518.py
+python evaluate_prospective_v0518.py --prospective data/prospective_new_unseen.csv --manifest results/prospective_manifest_v0517.json --output results/prospective_comparison_v0518.json
+```
+
+Runs Keyword, TF-IDF trained on the old development training set, frozen LLM_SEM semantic-vector candidate router, and its frozen similarity gate on the SHA-256-checked 80-case synthetic set. **All predictors read only the request text**: the manually authored Subject/Predicate/Object/Intent fields and gold labels are reserved for descriptive annotation and scoring. A true Structured Semantic Router requires a separate automatic text-to-SPOI parser, and is **not** evaluated here; feeding gold-side SPOI into a router would leak information. Goals are provisional; samples were newly authored for this project but do not constitute external independent validation. No retuning and no QHA 2 Copies in 3 test.
