@@ -66,7 +66,7 @@ def main():
     required=(args.request_id,args.vm,args.answer,args.execution_id,args.executed_at,args.source)
     if any(x is None for x in required):p.error("Intake requires all six metadata and answer arguments")
     if args.request_id not in known:p.error("Unknown request_id")
-    if args.request_id in replies:p.error("Reply already exists: refusing overwrite")
+    if args.request_id in replies and any(str(replies[args.request_id].get(k,"")).strip() for k in ("answer","execution_id","executed_at","source")):\n        p.error("Nonempty reply already exists: refusing overwrite")
     try:row=intake(known[args.request_id],*required)
     except ValueError as ex:p.error(str(ex))
     path.parent.mkdir(parents=True,exist_ok=True)
