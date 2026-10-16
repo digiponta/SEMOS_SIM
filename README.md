@@ -477,3 +477,16 @@ python simulate_vm_aware_recovery_v0525.py --input results/and_or_gate_v0523.jso
 ```
 
 Simulates OR Gate provisional VM dispatch, VM self-report `ACCEPTED` or `NOT_SUPPORTED`, automatic retry, and eventual Discovery. Deterministic synthetic responder uses evaluation **gold** to emulate configurable capability-check false positives/negatives; the dispatcher itself receives only the reply. Default zero errors is an idealized oracle, **not measured VM behavior**. Retries use alphabetical remaining VMs, since the v0.5.23 artifact lacks top-2 scores; actual semantic top-2 routing remains future work. No real VM execution, commit, rollback, external effects, semantic verification or 2 Copies in 3 is tested. Results are retrospective and synthetic.
+
+## v0.5.26 — User-authorized round-robin VM capability probe
+
+Gate-rejected requests remain rejected unless explicitly authorized by `--approval-file` (CSV `request_id,approved` with `true` or `false`); absent entries are denied. An authorized rejected request starts a rotating VM-A/B/C sequence and stops on first `ACCEPTED`, else Discovery. Nonrejected requests retain v0.5.25 behavior. Consent is an **offline supplied fixture**, not interactive UI consent. Never interpret it as authorization for side effects.
+
+```powershell
+git pull origin main
+python -m unittest -v test_simulate_user_rr_v0526.py
+# Prepare approval fixture manually, e.g. request_id,approved followed by EVALA002,true
+python simulate_user_rr_v0526.py --input results/and_or_gate_v0523.json --approval-file data/user_rr_approvals.csv --output results/user_authorized_rr_v0526.json
+```
+
+**Limitations:** Synthetic VM responder still reads gold labels. Simulates no actual VM or effects. Default zero-error behavior is an idealized upper bound. Fault simulation: `--false-accept 0.10 --false-reject 0.10` with a *different* output path. RR probe start changes per **approved Gate rejection**, not per request. Already-exposed examples are exploratory only.
