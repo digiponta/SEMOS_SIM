@@ -570,3 +570,18 @@ python run_hitl_retry_v05293.py --input results/hitl_packets_retry_v05291.json -
 ```
 
 Before this, create a genuine RETRY decision using the v0.5.29.2 GUI or another human-controlled CSV. The v0.5.29.2 GUI itself is not yet wired to display replacement answers from v0.5.29.3; this remains follow-up work. Simulation outputs are not evidence of real VM dispatch, which is external to this project milestone.
+
+## v0.5.29.4 — Retry reply provenance gate and review GUI
+
+Adds `validate_hitl_retry_v05294.py` to reject placeholders, empty/short replies, missing declared provenance (`execution_id`, `executed_at`, `source`), wrong VM, or changed questions. Validation failure keeps the request in `RETRY_HANDOFF_PENDING_VM_EXECUTION`; it does not approve or reroute it. Source metadata is **self-declared, not authenticated**. Valid replacement answers become `PENDING_USER_REVIEW` with prior review cleared. A new Tkinter GUI `hitl_retry_review_gui_v05294.py` displays replacement answers and self-declared provenance and saves a new round's explicit decisions.
+
+```powershell
+git pull origin main
+python -m unittest -v test_validate_hitl_retry_v05294.py
+# Header: request_id,vm,question,answer,execution_id,executed_at,source
+# Supply a real answer, and its claimed metadata, not placeholder example text.
+python validate_hitl_retry_v05294.py --input results/hitl_retry_handoff_v05293.json --reply-file data/hitl_retry_replies_v05294.csv --output results/hitl_retry_validated_v05294.json
+python hitl_retry_review_gui_v05294.py --input results/hitl_retry_validated_v05294.json --output data/hitl_retry_review_v05294.csv
+```
+
+Review CSV is a human decision record for the replacement answer; `APPROVE` is never inferred. The GUI does not itself advance the state to USER_CONFIRMED; that is a future integration. No actual VM invocation, cryptographic provenance, semantic validation of answer truth, transaction rollback, or irreversible action is present.
