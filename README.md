@@ -537,3 +537,18 @@ python prepare_hitl_packets_v05291.py --input results/user_authorized_rr_v0526.j
 ```
 
 Missing question/answer => `AWAITING_ANSWER_PAYLOAD`, and an explicit review decision in that state is rejected. Supplied answers appear as `PENDING_USER_REVIEW` until a genuine decision is given. `RETRY` selects a **not-yet-contacted VM** based on source routing events, with no VM execution and no synthesized replacement answer. If all VMs were previously contacted, it transitions to Discovery. This is a protocol simulation only, not a UI and not real VM responses. Do not treat CSV fixtures as genuine human evaluations unless they are supplied by the human.
+
+## v0.5.29.2 — Local HITL answer review GUI
+
+A local Tkinter GUI displays **explicitly supplied** question and VM answer content, and asks the user to choose APPROVE, REJECT, RETRY, or DISCOVERY. Decisions require a confirmation click and are saved atomically to CSV. A request without a nonempty question and answer is **not reviewable**. Rejected/unknown/Discovery routes are excluded. RETRY is recorded as a request only; no new VM is executed. No real VM answer source or user authenticity mechanism is present.
+
+```powershell
+git pull origin main
+python -m unittest -v test_hitl_review_gui_v05292.py
+# Create data/hitl_answers_v05292.csv with header: request_id,question,answer
+# Use real responses only; the simulator does not generate them.
+python hitl_review_gui_v05292.py --input results/user_authorized_rr_v0526.json --payload-file data/hitl_answers_v05292.csv --review-file data/hitl_gui_decisions_v05292.csv
+python prepare_hitl_packets_v05291.py --input results/user_authorized_rr_v0526.json --payload-file data/hitl_answers_v05292.csv --review-file data/hitl_gui_decisions_v05292.csv --output results/hitl_packets_reviewed_v05292.json
+```
+
+Tkinter must be available in the local Python installation. If no payload data exists, the GUI cannot show answers. Review decisions do not validate factual truth. For irreversible actions, obtaining review decisions alone does not execute or authorize side effects.
