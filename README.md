@@ -615,3 +615,16 @@ python finalize_hitl_retry_v05296.py --input results/hitl_retry_validated_v05294
 ```
 
 The current EVALA001 blank VM-C template cannot be finalized: it must first contain the actual external response and validated provenance; running GUI against pending-execution packets intentionally reports no reviewable items.
+
+## v0.5.29.7 — Isolated mock VM transport
+
+Mock-only transport is implemented in `mock_vm_transport_v05297.py`. It consumes pending retry packets and an explicitly synthetic fixture file `data/mock_vm_replies_v05297.csv`, validates VM/request/question correlation, simulates timeout and connection failures, and (for a valid fixture) produces an unapproved `PENDING_USER_REVIEW` response carrying `transport: MOCK_ONLY`. **No real VM was invoked**, and the embedded synthetic answer must never be represented as a real VM answer. Valid mock replies remain subject to user review; test success does not demonstrate real integration.
+
+```powershell
+git fetch origin
+git restore --source=origin/main -- mock_vm_transport_v05297.py test_mock_vm_transport_v05297.py data/mock_vm_replies_v05297.csv
+python -m unittest -v test_mock_vm_transport_v05297.py
+python mock_vm_transport_v05297.py --input results/hitl_retry_handoff_v05293.json --fixture-file data/mock_vm_replies_v05297.csv --output results/hitl_mock_transport_v05297.json
+```
+
+Next: an actual VM transport adapter with explicit endpoint authorization, timeouts, response-to-request correlation, and provenance verification. Existing offline test paths stay isolated from the real adapter.
