@@ -174,3 +174,15 @@ python compare_prototypes_v044.py --validation data/validation_v043_dev100.csv -
 ```
 
 Inspect `results/prototype_comparison_v044.json` for predictions, margin, latency, and per-VM confusion. Use a **separate** validation/holdout protocol to calibrate Unknown Gate for each method, then evaluate a fully unseen final dataset. This comparison is developmental and cannot establish independent generalization.
+
+## v0.4.5 — Per-method calibrated Unknown Gate (development only)
+
+This experiment applies the same threshold/margin grid and false-accept budget independently to Single, Centroid, and Multi-Prototype. It outputs known routing accuracy, coverage, selective accuracy, unknown rejection, per-method threshold choices, and eligible Risk–Coverage operating points.
+
+```powershell
+git pull origin main
+python -m unittest -v test_compare_gated_prototypes_v045.py
+python compare_gated_prototypes_v045.py --validation data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt
+```
+
+Output: `results/gated_prototypes_v045.json`. Thresholds selected on this same development dataset are **optimistically biased**. Do not use these scores to claim final performance or publish superiority. Keep `semantic_scheduler.py` unchanged until thresholds are frozen and evaluated against a separately curated final holdout. The 25 unknown validation cases make a 5% false-accept limit coarse (one false accept = 4%). The 448 candidate combinations are multiple-comparison selection and increase validation overfitting risk.
