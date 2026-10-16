@@ -300,3 +300,15 @@ python evaluate_separated_gate_v057.py --development data/validation_v043_dev100
 ```
 
 Candidate: score/margin/centroid–multi agreement features, fitted per nominated VM to known/UNKNOWN class centroids, then contrasted by scaled feature distance. A development-only out-of-fold evaluation is reported beside the existing (in-sample) frozen-gate baseline; the two are not a fair independent comparison. Grouped split blocks **exactly normalized identical requests only**, not paraphrases, and cannot remove previous model selection bias. No 400-item final candidate evaluation input is used, no model weights trained, and the v0.5.3 configuration remains frozen. This is an exploratory open-set classifier rather than a probabilistically calibrated confidence model.
+
+## v0.5.8 — Paired grouped development validation and uncertainty
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_paired_grouped_v058.py
+python evaluate_paired_grouped_v058.py --development data/validation_v043_dev100.csv --frozen config/hybrid_gate_v053_frozen.json --output results/paired_grouped_gate_v058.json
+```
+
+Optional, **preferred**: provide a manually curated `text,group_id` CSV with an entry for every development request, grouping questions of the same topic and paraphrases under the same `group_id`. Add `--groups data/development_topic_groups.csv`. Without this, the fallback groups only exact normalized text; output is explicitly labeled `EXACT_TEXT_ONLY`, **not** topic-disjoint validation.
+
+v0.5.8 produces side-by-side predictions on identical held-out folds for frozen Global and fitted Separated Gate. The Global parameters were nonetheless selected earlier using all development examples, so **paired folds do not repair pre-existing selection bias**. Unknown false-accept Wilson intervals are descriptive and assume independent observations; correlated prompts undermine that assumption. Previously evaluated synthetic 400-case holdout is not used. No runtime or frozen gate changes.
