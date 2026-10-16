@@ -11,6 +11,8 @@ class VMRecoveryTests(unittest.TestCase):
   self.assertEqual(dispatch(self.trace("UNKNOWN"))["final"],"DISCOVERY")
  def test_rejected(self):
   self.assertEqual(dispatch(self.trace(accepted=False))["final"],"DISCOVERY")
+  self.assertEqual(dispatch(self.trace(accepted=False))["retry_count"],0)
+  self.assertEqual(summarize([dispatch(self.trace(accepted=False))],[self.trace(accepted=False)])["retry_requests"],0)
  def test_injected_false_response(self):
   def bad(vm,gold,request_id):return "ACCEPTED"
   self.assertEqual(dispatch(self.trace(),bad)["final"],"VM-A")
