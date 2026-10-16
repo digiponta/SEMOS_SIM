@@ -138,3 +138,21 @@ python calibrate_gate_v042.py --validation data/my_validation.csv --model model/
 ```
 
 This reports a threshold/margin grid search constrained by unknown false-accept rate (default <= 5%), with known accuracy, coverage, misroute rate and reject rate. It does **not** automatically alter `semantic_scheduler.py`, does not guarantee generalization, and rejects use of the bundled `dev_test_v040.csv` fixture by filename. Freeze chosen values before a truly independent final holdout and measure sensitivity across more examples. Note the small-sample uncertainty if validation has few unknowns.
+
+## v0.4.3 — Development validation expansion
+
+Added `data/validation_v043_dev100.csv`: 100 manually authored prompts, 25 per class (VM-A / VM-B / VM-C / UNKNOWN). These examples are **development-only**; they have not been independently labeled or frozen as a final benchmark. Some phrasing resembles the known capability profiles. Scores derived from this file are calibration/development results, not generalization claims.
+
+Dataset validation and full benchmark:
+
+```powershell
+git pull origin main
+python -m unittest -v test_audit_dataset_v043.py test_benchmark_v040.py test_calibrate_gate_v042.py
+python audit_dataset_v043.py --validation data/validation_v043_dev100.csv
+python benchmark_v040.py --train data/dev_train_v040.csv --test data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt --output results/development_benchmark_v043.json
+python calibrate_gate_v042.py --validation data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt --output results/development_calibration_v043.json
+```
+
+Audit checks class balance, exact normalized duplicates and candidate near overlaps against `data/dev_train_v040.csv` and `data/dev_test_v040.csv`. Similarity is only character-bigram Jaccard, so semantic paraphrases and incorrect category labels need manual inspection. **Do not tune on `dev_test_v040.csv`**. The calibration sweep must be used to fix gate thresholds *before* an independently prepared final 400-case holdout.
+
+Important methodological limit: running the benchmark on the same validation dataset used for threshold calibration gives developmental scores only. Those values must never be presented as an independent final test. Dataset creation is not the same as measuring model accuracy. The existing `semantic_scheduler.py` gate remains unchanged pending validation and independent testing.
