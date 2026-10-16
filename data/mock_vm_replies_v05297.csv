@@ -1,0 +1,2 @@
+request_id,vm,question,answer,execution_id,executed_at,simulate
+EVALA001,VM-C,量子力学とは何ですか,量子状態の変化と観測を記述する物理理論です。,mock-evala001,2026-10-17T12:00:00+09:00,
