@@ -413,3 +413,13 @@ python diagnose_gate_failures_v0519.py --manifest results/prospective_manifest_v
 ```
 
 Replays v0.5.18 **exactly** under frozen LLM_SEM checkpoint and config. For each gold VM, distinguishes gate rejection caused by low fused similarity, low runner-up margin, or both; records margins relative to frozen thresholds, centroid/multi-prototype agreement, and candidate correctness. Gold labels are used only for post-hoc audit, never in routing. This is analysis of already exposed synthetic data, not a new independent score or a tuned Gate. QHA 2 Copies in 3 remains out of scope.
+
+## v0.5.20 — VM-specific Similarity Diagnostic (retrospective)
+
+```powershell
+git pull origin main
+python -m unittest -v test_diagnose_vm_similarity_v0520.py
+python diagnose_vm_similarity_v0520.py --input results/gate_failure_attribution_v0519.json --output results/vm_similarity_diagnostic_v0520.json
+```
+
+Reports fused-score distributions for correct VM candidates versus UNKNOWN and other-domain requests whose top candidate is that same VM, and conditional pairwise AUC. Shows **hypothetical** similarity-threshold changes (-0.10, -0.05, 0, +0.05), holding the margin fixed; counts candidate rescues and UNKNOWN/wrong-route risks. These are sensitivity examples, **not calibrated recommendations**; conditional AUC suffers selection bias, because all examples are filtered to top-1 candidate VM. Data already exposed. Frozen inference unchanged and no 2 Copies in 3 testing.
