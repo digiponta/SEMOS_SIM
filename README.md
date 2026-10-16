@@ -156,3 +156,21 @@ python calibrate_gate_v042.py --validation data/validation_v043_dev100.csv --mod
 Audit checks class balance, exact normalized duplicates and candidate near overlaps against `data/dev_train_v040.csv` and `data/dev_test_v040.csv`. Similarity is only character-bigram Jaccard, so semantic paraphrases and incorrect category labels need manual inspection. **Do not tune on `dev_test_v040.csv`**. The calibration sweep must be used to fix gate thresholds *before* an independently prepared final 400-case holdout.
 
 Important methodological limit: running the benchmark on the same validation dataset used for threshold calibration gives developmental scores only. Those values must never be presented as an independent final test. Dataset creation is not the same as measuring model accuracy. The existing `semantic_scheduler.py` gate remains unchanged pending validation and independent testing.
+
+## v0.4.4 — Fixed Multi-Prototype study
+
+Compare three ranking-only variants using the **same LLM_SEM checkpoint and validation CSV**:
+
+- **single:** one existing capability text per dummy VM
+- **centroid:** normalized mean of five predeclared capability prototype vectors per VM
+- **multi:** maximum cosine across five prototypes per VM
+
+The predeclared prototypes are in `compare_prototypes_v044.py`. They are not trained or selected from the labels in `validation_v043_dev100.csv`, although their domains are informed by the project design. Comparisons exclude the Unknown Gate; accordingly, Unknown Reject Rate is always zero for these variants. Do not compare these results to gated routing as though they have equivalent rejection policies.
+
+```powershell
+git pull origin main
+python -m unittest -v test_compare_prototypes_v044.py
+python compare_prototypes_v044.py --validation data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt
+```
+
+Inspect `results/prototype_comparison_v044.json` for predictions, margin, latency, and per-VM confusion. Use a **separate** validation/holdout protocol to calibrate Unknown Gate for each method, then evaluate a fully unseen final dataset. This comparison is developmental and cannot establish independent generalization.
