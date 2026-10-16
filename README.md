@@ -256,3 +256,15 @@ Outputs:
 - `config/hybrid_gate_v053_frozen.json`: selected threshold, margin, weight, model and development SHA256. Existing different frozen settings are **not overwritten**. If there is no feasible candidate satisfying the budget, no configuration is written.
 
 Holdout-named CSVs are rejected as calibration inputs. The previously constructed 400-example candidate holdout must **not** be used to choose thresholds, prototypes, or weights. Calibration uses the already explored 100 development records, so metrics are optimistic. Inspect calibration and validate the freeze before a single holdout scoring pass. Current production Semantic Scheduler is unchanged.
+
+## v0.5.4 — First-pass candidate holdout evaluation with frozen gate
+
+Only after manual candidate-holdout review and v0.5.3 calibration, run once:
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_frozen_holdout_v054.py
+python evaluate_frozen_holdout_v054.py --holdout data/independent_holdout.csv --frozen config/hybrid_gate_v053_frozen.json --audit results/holdout_audit_v052.json --output results/holdout_benchmark_v054.json
+```
+
+The command verifies the calibration CSV SHA256, freeze format, matching holdout audit path/size/label counts, and refuses to overwrite existing results. It uses the previously frozen weight=0.7, cosine threshold=0.76 and margin=0.06 **as read from the JSON**, not command-line tuning inputs. Reports baseline Round Robin, Keyword, TF-IDF and frozen Semantic Hybrid. It **does not** claim scientific independence: the 400 prompts were synthetic and developed in the same research context, and the overlap audit cannot prove semantic independence. Do not tune against this evaluation output. Routing latency is single-run wall clock; turnaround is simulated and cannot demonstrate OS superiority.
