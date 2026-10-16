@@ -332,3 +332,13 @@ python diagnose_nested_topic_v0510.py --input results/nested_topic_gate_v059.jso
 ```
 
 Aggregates the v0.5.9 JSON only: by-class confusion, topic-group accuracy and rejects, 5-fold cutoff spread, each UNKNOWN false accept, and known demands held as UNKNOWN. Pure diagnosis; no change to model, weights, guard or the earlier 400 synthetic examples. v0.5.9 JSON does not include each example's raw contrast score, so score distributions and calibration reliability cannot be audited from this artifact; that requires a separate, independently validated instrumentation run.
+
+## v0.5.11 — Per-query replayable router decision trace
+
+```powershell
+git pull origin main
+python -m unittest -v test_trace_nested_gate_v0511.py
+python trace_nested_gate_v0511.py --reference results/nested_topic_gate_v059.json --output results/nested_traces_v0511.json
+```
+
+Exactly replays v0.5.9 topic-fold and inner threshold-selection seeds. Records each held-out query's selected candidate VM, fused semantic score, runner-up similarity margin, centroid/multi agreement, known/unknown feature distances, contrast score, guard cutoff, final predicted destination and reason. Requires **exact comparison** of every final prediction and topic with the v0.5.9 source JSON; mismatch raises an exception. This is instrumentation for analysis only, not new independent evidence, and does not modify QHA's 2 Copies in 3 or LLM_SEM model.
