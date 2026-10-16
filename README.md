@@ -312,3 +312,13 @@ python evaluate_paired_grouped_v058.py --development data/validation_v043_dev100
 Optional, **preferred**: provide a manually curated `text,group_id` CSV with an entry for every development request, grouping questions of the same topic and paraphrases under the same `group_id`. Add `--groups data/development_topic_groups.csv`. Without this, the fallback groups only exact normalized text; output is explicitly labeled `EXACT_TEXT_ONLY`, **not** topic-disjoint validation.
 
 v0.5.8 produces side-by-side predictions on identical held-out folds for frozen Global and fitted Separated Gate. The Global parameters were nonetheless selected earlier using all development examples, so **paired folds do not repair pre-existing selection bias**. Unknown false-accept Wilson intervals are descriptive and assume independent observations; correlated prompts undermine that assumption. Previously evaluated synthetic 400-case holdout is not used. No runtime or frozen gate changes.
+
+## v0.5.9 — Nested topic-group development evaluation
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_nested_topic_gate_v059.py
+python evaluate_nested_topic_gate_v059.py --development data/validation_v043_dev100.csv --groups data/development_topic_groups.csv --frozen config/hybrid_gate_v053_frozen.json --output results/nested_topic_gate_v059.json
+```
+
+Outer 5-fold topic-group CV reserves whole topics, while inner 3-fold group CV selects a contrast-distance rejection threshold using only outer-train examples. Candidate scores are VM-aware, comparing distance to known and unknown feature centroids. Reports unknown false acceptance with descriptive Wilson 95% interval and reports whether each inner estimate satisfies the empirical 5% budget. **No claim of 5% statistical upper bound is made** with tiny UNKNOWN samples. Frozen v0.5.3 and previously evaluated candidate 400 samples remain unchanged. Reference is development-fitted, therefore not a fair untouched benchmark. A new, independent benchmark remains necessary.
