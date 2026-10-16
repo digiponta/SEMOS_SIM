@@ -510,3 +510,17 @@ python evaluate_two_stage_capability_v0528.py --input results/and_or_gate_v0523.
 ```
 
 Compares first-stage-only acceptance to requiring both stage checks. Second stage is called only after first-stage acceptance; a rejection continues VM probing. Simulates independent, perfectly shared, or 50%-mixture paired random errors, plus single-stage baseline on identical cases and explicit approvals. Reports known correctness, false commits, UNKNOWN discovery, and second-stage check counts over 200 seeded replicates. **Gold-aware error injection is synthetic**, shared errors are an assumed correlation model, and no real VM capability checking or commit is performed. New independent cases and actual capability response traces are needed for production evidence.
+
+## v0.5.29 — Human-in-the-Loop response review (initial simulation)
+
+VM `SIMULATED_COMPLETED` is converted to `PROVISIONAL_RESULT` rather than presumed correct. Missing user review leaves `PENDING_USER_REVIEW` (fail-closed); explicit `APPROVE`, `REJECT`, `RETRY`, or `DISCOVERY` decisions determine the next state. Discovery routes do not request answer approval. `RETRY_REQUESTED` is a handoff marker, not an executed retry. No real VM answer text or live user UI is available, and user confirmation is distinct from factual correctness.
+
+```powershell
+git pull origin main
+python -m unittest -v test_simulate_hitl_review_v0529.py
+python simulate_hitl_review_v0529.py --input results/user_authorized_rr_v0526.json --output results/hitl_review_v0529.json
+# Optional explicit user feedback: CSV request_id,decision (APPROVE/REJECT/RETRY/DISCOVERY)
+python simulate_hitl_review_v0529.py --input results/user_authorized_rr_v0526.json --review-file data/hitl_reviews_v0529.csv --output results/hitl_review_with_decisions_v0529.json
+```
+
+This is only the first v0.5.29 protocol milestone. Real response payload validation, user feedback UI, durable authorization, automated rerouting and contract checking remain future work.
