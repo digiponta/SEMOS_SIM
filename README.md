@@ -242,3 +242,17 @@ python audit_holdout_v052.py --holdout data/independent_holdout.csv --output res
 ```
 
 The candidate holdout is **not included**; prepare it separately. The auditor checks canonicalized exact overlap and character bigram near-overlap with all available development CSVs. Missing default reference files are reported as failures. Human review of paraphrases and labels is mandatory. **Do not use holdout to optimize gates, blend weights, or prototypes.** The timing script randomizes method order across repetitions with warmup and records per-run variability but still excludes model initialization, does not synchronize GPU asynchronous operations explicitly, and is not an OS benchmark.
+
+## v0.5.3 — Freeze calibrated Hybrid Unknown Gate (development-only)
+
+```powershell
+git pull origin main
+python -m unittest -v test_calibrate_hybrid_gate_v053.py
+python calibrate_hybrid_gate_v053.py --validation data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt --weight 0.7 --max-unknown-false-accept 0.05
+```
+
+Outputs:
+- `results/hybrid_gate_calibration_v053.json`: constrained grid search and observed development-only score.
+- `config/hybrid_gate_v053_frozen.json`: selected threshold, margin, weight, model and development SHA256. Existing different frozen settings are **not overwritten**. If there is no feasible candidate satisfying the budget, no configuration is written.
+
+Holdout-named CSVs are rejected as calibration inputs. The previously constructed 400-example candidate holdout must **not** be used to choose thresholds, prototypes, or weights. Calibration uses the already explored 100 development records, so metrics are optimistic. Inspect calibration and validate the freeze before a single holdout scoring pass. Current production Semantic Scheduler is unchanged.
