@@ -382,3 +382,14 @@ python evaluate_feature_auc_v0516.py --input results/nested_traces_v0511.json --
 ```
 
 Compares fused similarity, runner-up margin, contrast score, guard margin and feature distances using pairwise ROC AUC. Contrasts correctly/incorrectly classified known requests, known versus UNKNOWN, and correctly nominated known requests that were rejected versus UNKNOWN. Illustrative AUC target = 0.90, an **unvalidated engineering target**, not a statistical expected value. Comparisons involving accepted/rejected labels are partly determined by the gate score itself; do not treat such AUC as independent performance. No new samples, tuning, 400-case candidate holdout, or QHA 2 Copies in 3 test.
+
+## v0.5.17 — Prospective structured-semantic evaluation preparation
+
+This stage defines a CSV schema for a **new, independently authored** dataset: `request_id,text,gold,subject,predicate,object,intent,topic_group,source_id`. `gold` is one of `VM-A`, `VM-B`, `VM-C`, `UNKNOWN`. `subject/predicate/object/intent` are manually specified structured labels, not outputs of a trained parser. Ensure provenance (`source_id`), disjoint topics, and data freeze before evaluating competing semantic representations; the tool cannot itself certify independence.
+
+```powershell
+python -m unittest -v test_prepare_prospective_eval_v0517.py
+python prepare_prospective_eval_v0517.py --prospective data/prospective_new_unseen.csv --output results/prospective_manifest_v0517.json
+```
+
+The prospective CSV **is not included**: create one without consulting previously used development or exposed candidate holdout cases. The validator checks required columns, class labels, exact normalized text duplicates/overlap with v0.5.11 development trace, and SHA-256 hashes; it does **not** run an ML benchmark, prove paraphrase or topic independence, change the frozen router, or evaluate QHA's 2 Copies in 3. Previously reported AUC and accuracy remain exploratory.
