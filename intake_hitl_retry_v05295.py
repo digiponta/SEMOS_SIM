@@ -66,14 +66,19 @@ def main():
     required=(args.request_id,args.vm,args.answer,args.execution_id,args.executed_at,args.source)
     if any(x is None for x in required):p.error("Intake requires all six metadata and answer arguments")
     if args.request_id not in known:p.error("Unknown request_id")
-    if args.request_id in replies and any(str(replies[args.request_id].get(k,"")).strip() for k in ("answer","execution_id","executed_at","source")):\n        p.error("Nonempty reply already exists: refusing overwrite")
+    if args.request_id in replies and any(str(replies[args.request_id].get(k,"")).strip() for k in ("answer","execution_id","executed_at","source")):
+        p.error("Nonempty reply already exists: refusing overwrite")
     try:row=intake(known[args.request_id],*required)
     except ValueError as ex:p.error(str(ex))
     path.parent.mkdir(parents=True,exist_ok=True)
-    with path.open("a",encoding="utf-8",newline="") as f:
+    replies[args.request_id]={k:row[k] for k in HEADER if k!="request_id"}
+    temp=path.with_name(path.name+".tmp")
+    with temp.open("w",encoding="utf-8",newline="") as f:
         writer=csv.writer(f)
-        if path.stat().st_size==0:writer.writerow(HEADER)
-        writer.writerow([row[k] for k in HEADER])
+        writer.writerow(HEADER)
+        for rid,item in sorted(replies.items()):
+            writer.writerow([rid]+[item.get(k,"") for k in HEADER[1:]])
+    temp.replace(path)
     print("Saved external VM reply declaration for",args.request_id)
     print("Metadata is not authenticated; next run validate_hitl_retry_v05294.py")
 if __name__=="__main__":main()
