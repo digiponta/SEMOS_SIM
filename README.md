@@ -372,3 +372,13 @@ python analyze_feature_failures_v0515.py --input results/nested_traces_v0511.jso
 ```
 
 Summarizes similarity, margin, contrast and known/unknown distances for correct routing, candidate VM errors, false gate rejects, and UNKNOWN errors, including VM-specific aggregates. **Exploratory descriptive analysis only**: no target optimization, learning, independent holdout or 2 Copies in 3 testing. The v0.5.13 target goals remain provisional and are not new measured outcomes.
+
+## v0.5.16 — Exploratory feature AUC comparisons
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_feature_auc_v0516.py
+python evaluate_feature_auc_v0516.py --input results/nested_traces_v0511.json --output results/feature_auc_v0516.json
+```
+
+Compares fused similarity, runner-up margin, contrast score, guard margin and feature distances using pairwise ROC AUC. Contrasts correctly/incorrectly classified known requests, known versus UNKNOWN, and correctly nominated known requests that were rejected versus UNKNOWN. Illustrative AUC target = 0.90, an **unvalidated engineering target**, not a statistical expected value. Comparisons involving accepted/rejected labels are partly determined by the gate score itself; do not treat such AUC as independent performance. No new samples, tuning, 400-case candidate holdout, or QHA 2 Copies in 3 test.
