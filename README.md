@@ -456,3 +456,13 @@ python compare_and_or_gate_v0523.py --calibration data/new_calibration.csv --eva
 ```
 
 Replays frozen LLM_SEM checkpoint to measure AND (ECDF percentile >= 0.76 **and** margin >= 0.06) vs OR (ECDF percentile >= 0.76 **or** margin >= 0.06) on the same pre-existing synthetic calibration/evaluation split. Preserves baseline thresholds and model weights; reports score/margin/ECDF diagnostics, correct-route rescues, wrong-route accepts, and UNKNOWN false accepts. OR is exploratory **after evaluation set was inspected**, so metrics are not independent confirmation. Recovery is a future proposal **not implemented**: validate provisional reversible execution, rollback and retry if needed; irreversible side effects require explicit safeguards.
+
+## v0.5.24 — OR Gate optimistic execution / recovery (oracle simulation)
+
+```powershell
+git pull origin main
+python -m unittest -v test_simulate_recovery_v0524.py
+python simulate_recovery_v0524.py --input results/and_or_gate_v0523.json --output results/recovery_oracle_simulation_v0524.json
+```
+
+An **in-memory-only state-machine experiment** reads v0.5.23 OR traces: Gate reject goes straight to Discovery; accepted requests enter provisional VM simulation; an **oracle that reads evaluation gold** validates route, then a simulated commit or rollback, and optionally a deterministic different VM for retry. The alternate is **not** the measured top-2 candidate (not available in input). No VM is invoked, no actual snapshots, isolation, semantic result validation, rollback or side effect is performed. These metrics are an **optimistic oracle upper bound**, not real recovery performance; don't compare as production performance or use exposed 40 cases to tune parameters. Future real validator must be gold-free and may require user confirmation for irreversible operations.
