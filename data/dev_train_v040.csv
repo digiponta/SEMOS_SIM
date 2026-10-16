@@ -1,0 +1,17 @@
+text,label
+量子現象の仕組み,VM-A
+微分方程式を解く,VM-A
+電磁場の計算,VM-A
+確率分布を調べる,VM-A
+GPUの性能を評価,VM-B
+CUDAのカーネル,VM-B
+Pythonのコード,VM-B
+LLMを実装,VM-B
+俳句を解釈する,VM-C
+小説の構成,VM-C
+日本語の文法,VM-C
+詩を朗読する,VM-C
+旅行の持ち物,UNKNOWN
+庭の草を刈る,UNKNOWN
+税金の申告,UNKNOWN
+雨の予報,UNKNOWN
