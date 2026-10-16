@@ -210,3 +210,17 @@ python benchmark_os_advantage_v050.py --model model/model-sem-internalized-v0157
 ```
 
 Output: `results/os_advantage_v050.json`, containing metrics and individual routing decisions. Run without `--model` to test just the three classic baselines. Default Hybrid weight=0.7 comes from prior development exploration and its zero gate rejects no out-of-domain inputs. Therefore this benchmark is **development-only**, not an independent scientific claim. Evaluate unknown rejection and correct-routing separately. Final comparisons must freeze all parameters/prototypes, curate genuinely unseen independent requests, rotate method order and repeat timed trials with warmup, and disclose model loading + hardware + overhead; separate actual OS experiments will be required to support genuine OS superiority.
+
+## v0.5.1 — Paired statistical analysis of routing outcomes
+
+This tool evaluates **paired, request-matched** v0.5.0 predictions in an existing JSON; it does not rerun model inference, fabricate a final holdout, or treat synthetic turnaround as wall-clock execution.
+
+```powershell
+git pull origin main
+python -m unittest -v test_analyze_os_advantage_v051.py
+python analyze_os_advantage_v051.py --input results/os_advantage_v050.json --output results/os_advantage_stats_v051.json
+```
+
+Default comparison: TF-IDF vs Semantic Hybrid. The output includes known correct-routing rate difference, unknown rejection difference, paired percentile bootstrap 95% intervals (5000 deterministic resamples) and exploratory exact two-sided McNemar tests. If using other methods, specify `--reference round_robin` or `--candidate keyword`.
+
+**Interpretation boundary:** All these requests were used in previous development iterations and weight/prototype selection. Bootstrap intervals cannot remove this bias, and exploratory p-values must not be treated as confirmatory evidence. For a definitive claim, freeze the algorithms/thresholds and benchmark freshly curated, unseen and independently reviewed test requests. Repeated/warmed wall-clock latency measurements are a separate future experiment; the existing JSON contains only one measured run per method. The previous simulated queue benchmark is not real OS scheduling.
