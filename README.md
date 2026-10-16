@@ -290,3 +290,13 @@ python compare_gate_variants_v056.py --development data/validation_v043_dev100.c
 ```
 
 Variants: reference global 0.76/0.06, three VM-specific cosine threshold offsets per VM (-.08, -.04, +.04), consensus requirement, and three global offsets. These are exploratory sensitivity tests, **not** a statistically valid fitted per-VM calibrator or learned Contrastive Unknown Gate. Report keeps raw known coverage, known routing accuracy and unknown false accept. No modification to frozen configuration or Semantic Scheduler. A newly authored untouched evaluation set is necessary for confirmation.
+
+## v0.5.7 — Experimental separated VM-confidence/Unknown gate
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_separated_gate_v057.py
+python evaluate_separated_gate_v057.py --development data/validation_v043_dev100.csv --frozen config/hybrid_gate_v053_frozen.json --output results/separated_unknown_gate_v057.json
+```
+
+Candidate: score/margin/centroid–multi agreement features, fitted per nominated VM to known/UNKNOWN class centroids, then contrasted by scaled feature distance. A development-only out-of-fold evaluation is reported beside the existing (in-sample) frozen-gate baseline; the two are not a fair independent comparison. Grouped split blocks **exactly normalized identical requests only**, not paraphrases, and cannot remove previous model selection bias. No 400-item final candidate evaluation input is used, no model weights trained, and the v0.5.3 configuration remains frozen. This is an exploratory open-set classifier rather than a probabilistically calibrated confidence model.
