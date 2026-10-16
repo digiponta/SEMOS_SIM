@@ -601,3 +601,17 @@ python hitl_retry_review_gui_v05294.py --input results/hitl_retry_validated_v052
 ```
 
 The capitalized placeholders above are **explanatory only, not valid test data**. The validator tests syntactic provenance and simple placeholder patterns, not factual truth. Use actual VM output and timestamp, and do not claim live VM integration.
+
+## v0.5.29.6 — Explicit GUI decision state finalization
+
+`finalize_hitl_retry_v05296.py` converts the independent GUI decision CSV from v0.5.29.4 into auditable transitions: `APPROVE -> USER_CONFIRMED`, `REJECT -> USER_REJECTED`, `DISCOVERY -> DISCOVERY`, and `RETRY -> RETRY_HANDOFF_PENDING_VM_EXECUTION` for an unvisited VM, otherwise `DISCOVERY`. Decisions are accepted **only** for `PENDING_USER_REVIEW` packets containing a reply and declared provenance. Missing answers and repeated approvals fail closed. This does not execute VMs or authenticate a decision's identity.
+
+```powershell
+# Update and test
+git pull origin main
+python -m unittest -v test_finalize_hitl_retry_v05296.py
+# Only after an actual external VM reply has passed v0.5.29.4 and been reviewed in GUI:
+python finalize_hitl_retry_v05296.py --input results/hitl_retry_validated_v05294.json --decision-file data/hitl_retry_review_v05294.csv --output results/hitl_retry_finalized_v05296.json
+```
+
+The current EVALA001 blank VM-C template cannot be finalized: it must first contain the actual external response and validated provenance; running GUI against pending-execution packets intentionally reports no reviewable items.
