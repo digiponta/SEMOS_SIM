@@ -435,3 +435,13 @@ python prepare_vm_calibration_v0521.py --calibration data/new_calibration.csv --
 ```
 
 `new_calibration.csv` and `new_evaluation.csv` are **not supplied**: they require new independently sourced and topic/source-disjoint records with columns `request_id,text,gold,topic_group,source_id`. Automatic PASS does not prove semantic independence. Do not inspect evaluation labels or iterate on evaluation failures while developing candidates; final reference comparison uses frozen global gate and vector-only controls, Wilson 95% intervals, and held-out metrics. No results or 2 Copies in 3 validation are claimed.
+
+## v0.5.22 — VM ECDF calibrated gate: frozen split evaluation
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_vm_calibration_v0522.py
+python evaluate_vm_calibration_v0522.py --calibration data/new_calibration.csv --evaluation data/new_evaluation.csv --audit results/calibration_split_audit_v0521.json --output results/vm_calibrated_gate_v0522.json
+```
+
+Uses v0.5.21 **passed audit and byte-exact SHA-256 files**. Scores calibration requests first using the frozen LLM_SEM checkpoint and existing 70% centroid / 30% multi-prototype mixture. Builds an empirical score CDF separately for each top-1 candidate VM, then applies the preregistered 0.76 percentile criterion with unchanged raw runner-up margin 0.06. Evaluation labels and Subject/Predicate/Object/Intent annotations are NEVER used in inference. Compares unchanged Vector Only and Global Gate. Reports per-VM confusion and 95% Wilson confidence intervals. This is a synthetic split demonstration, not independent real-world validation; ECDF percentiles are not calibrated correctness probabilities and small samples can make quantiles unstable. Do not tune methods after observing the evaluation file. QHA synchronization is not evaluated.
