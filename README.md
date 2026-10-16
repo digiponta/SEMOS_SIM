@@ -500,3 +500,13 @@ python evaluate_vm_robustness_v0527.py --input results/and_or_gate_v0523.json --
 ```
 
 Ten predeclared false-accept / false-reject scenarios at 0/5/10/20% (single-axis and paired), 200 paired deterministic pseudo-random replicates each. Reports mean/min/max of outcomes and probe counts. **This is a sensitivity model with synthetic gold-aware responders** and previously inspected test cases, not independently validated real-VM error rates or evidence for deployment. Same explicit approval CSV from v0.5.26; absent approval means deny.
+
+## v0.5.28 — Two-stage capability validation, error-dependence sweep
+
+```powershell
+git pull origin main
+python -m unittest -v test_evaluate_two_stage_capability_v0528.py
+python evaluate_two_stage_capability_v0528.py --input results/and_or_gate_v0523.json --approval-file data/user_rr_approvals.csv --output results/two_stage_capability_v0528.json
+```
+
+Compares first-stage-only acceptance to requiring both stage checks. Second stage is called only after first-stage acceptance; a rejection continues VM probing. Simulates independent, perfectly shared, or 50%-mixture paired random errors, plus single-stage baseline on identical cases and explicit approvals. Reports known correctness, false commits, UNKNOWN discovery, and second-stage check counts over 200 seeded replicates. **Gold-aware error injection is synthetic**, shared errors are an assumed correlation model, and no real VM capability checking or commit is performed. New independent cases and actual capability response traces are needed for production evidence.
