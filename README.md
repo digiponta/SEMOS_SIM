@@ -198,3 +198,15 @@ python hybrid_router_v046.py --validation data/validation_v043_dev100.csv --mode
 ```
 
 Outputs per-method known accuracy, coverage, selective accuracy, Unknown reject rate, and rejection reasons to `results/hybrid_consensus_v046.json`. A disagreement is treated as UNKNOWN/HELD for strict mode, but does not imply a genuinely out-of-domain input. Prior use of these same 100 labels means any model selection based on them is exploratory; create an untouched validation split to choose gates, freeze a candidate, and only then evaluate the independently curated final holdout. No changes are made to production `semantic_scheduler.py`.
+
+## v0.5.0 — Quantitative control-plane comparison (NOT actual OS superiority)
+
+Compare deterministic Round Robin, Keyword, TF-IDF and optional actual LLM_SEM Hybrid routing under identical labeled request and dummy VM dispatch conditions. Fixed virtual arrival spacing (1 ms) and VM service durations (VM-A:8, VM-B:12, VM-C:10 ms) are **synthetic**; only Python wall-clock routing time is measured. `known_task_completion_proxy` means choosing the labeled VM, **not** executing the user task. No real Hyper-V/VMware, OS scheduler, resource measurements, knowledge synchronization, recovery, or IPC are evaluated here.
+
+```powershell
+git pull origin main
+python -m unittest -v test_benchmark_os_advantage_v050.py
+python benchmark_os_advantage_v050.py --model model/model-sem-internalized-v01575.pt
+```
+
+Output: `results/os_advantage_v050.json`, containing metrics and individual routing decisions. Run without `--model` to test just the three classic baselines. Default Hybrid weight=0.7 comes from prior development exploration and its zero gate rejects no out-of-domain inputs. Therefore this benchmark is **development-only**, not an independent scientific claim. Evaluate unknown rejection and correct-routing separately. Final comparisons must freeze all parameters/prototypes, curate genuinely unseen independent requests, rotate method order and repeat timed trials with warmup, and disclose model loading + hardware + overhead; separate actual OS experiments will be required to support genuine OS superiority.
