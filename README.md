@@ -278,3 +278,15 @@ python diagnose_hybrid_holdout_v055.py --holdout data/independent_holdout.csv --
 ```
 
 Diagnoses VM-A/B/C/UNKNOWN individually, gated versus ungated Hybrid, low-score versus low-margin rejections, and Centroid/Multi candidate disagreement. Requires the prior v0.5.4 evaluation, matching frozen settings and holdout SHA256, and refuses to overwrite. This is a **post-holdout diagnostic**: keep the same settings and preserve the 400-case results as an evaluation record. Changing thresholds, model or prototypes in response to these results requires a fresh untouched benchmark to assess any claimed improvement.
+
+## v0.5.6 — Exploratory VM-aware / consensus gate variants
+
+This iteration compares **hypotheses on development samples only**, without modifying the frozen v0.5.3 gate or reusing the 400-case holdout for calibration.
+
+```powershell
+git pull origin main
+python -m unittest -v test_compare_gate_variants_v056.py
+python compare_gate_variants_v056.py --development data/validation_v043_dev100.csv --frozen config/hybrid_gate_v053_frozen.json --output results/gate_variants_development_v056.json
+```
+
+Variants: reference global 0.76/0.06, three VM-specific cosine threshold offsets per VM (-.08, -.04, +.04), consensus requirement, and three global offsets. These are exploratory sensitivity tests, **not** a statistically valid fitted per-VM calibrator or learned Contrastive Unknown Gate. Report keeps raw known coverage, known routing accuracy and unknown false accept. No modification to frozen configuration or Semantic Scheduler. A newly authored untouched evaluation set is necessary for confirmation.
