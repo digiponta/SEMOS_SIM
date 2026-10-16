@@ -423,3 +423,15 @@ python diagnose_vm_similarity_v0520.py --input results/gate_failure_attribution_
 ```
 
 Reports fused-score distributions for correct VM candidates versus UNKNOWN and other-domain requests whose top candidate is that same VM, and conditional pairwise AUC. Shows **hypothetical** similarity-threshold changes (-0.10, -0.05, 0, +0.05), holding the margin fixed; counts candidate rescues and UNKNOWN/wrong-route risks. These are sensitivity examples, **not calibrated recommendations**; conditional AUC suffers selection bias, because all examples are filtered to top-1 candidate VM. Data already exposed. Frozen inference unchanged and no 2 Copies in 3 testing.
+
+## v0.5.21 — Preregistered VM calibration data separation
+
+The v0.5.20 result showed score-scale variation across VM candidates; the exposed 80 synthetic cases must **not** be used to fit or select a new Gate. v0.5.21 specifies a candidate (VM-wise empirical CDF of fused similarity using **new training-only calibration data**, then a fixed 0.76 percentile rule with unchanged raw margin .06), and audits calibration/evaluation source, topic and exact-text separation. This is a protocol proposal, **not an implemented or validated calibrated gate**.
+
+```powershell
+git pull origin main
+python -m unittest -v test_prepare_vm_calibration_v0521.py
+python prepare_vm_calibration_v0521.py --calibration data/new_calibration.csv --evaluation data/new_evaluation.csv --block data/validation_v043_dev100.csv --block data/independent_holdout.csv --block data/prospective_new_unseen.csv --output results/calibration_split_audit_v0521.json
+```
+
+`new_calibration.csv` and `new_evaluation.csv` are **not supplied**: they require new independently sourced and topic/source-disjoint records with columns `request_id,text,gold,topic_group,source_id`. Automatic PASS does not prove semantic independence. Do not inspect evaluation labels or iterate on evaluation failures while developing candidates; final reference comparison uses frozen global gate and vector-only controls, Wilson 95% intervals, and held-out metrics. No results or 2 Copies in 3 validation are claimed.
