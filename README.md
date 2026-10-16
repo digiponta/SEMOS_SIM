@@ -466,3 +466,14 @@ python simulate_recovery_v0524.py --input results/and_or_gate_v0523.json --outpu
 ```
 
 An **in-memory-only state-machine experiment** reads v0.5.23 OR traces: Gate reject goes straight to Discovery; accepted requests enter provisional VM simulation; an **oracle that reads evaluation gold** validates route, then a simulated commit or rollback, and optionally a deterministic different VM for retry. The alternate is **not** the measured top-2 candidate (not available in input). No VM is invoked, no actual snapshots, isolation, semantic result validation, rollback or side effect is performed. These metrics are an **optimistic oracle upper bound**, not real recovery performance; don't compare as production performance or use exposed 40 cases to tune parameters. Future real validator must be gold-free and may require user confirmation for irreversible operations.
+
+## v0.5.25 — VM-Aware Recovery Protocol simulation
+
+```powershell
+git pull origin main
+python -m unittest -v test_simulate_vm_aware_recovery_v0525.py
+python simulate_vm_aware_recovery_v0525.py --input results/and_or_gate_v0523.json --output results/vm_aware_recovery_v0525.json
+python simulate_vm_aware_recovery_v0525.py --input results/and_or_gate_v0523.json --false-accept 0.10 --false-reject 0.10 --output results/vm_aware_recovery_faulty_v0525.json
+```
+
+Simulates OR Gate provisional VM dispatch, VM self-report `ACCEPTED` or `NOT_SUPPORTED`, automatic retry, and eventual Discovery. Deterministic synthetic responder uses evaluation **gold** to emulate configurable capability-check false positives/negatives; the dispatcher itself receives only the reply. Default zero errors is an idealized oracle, **not measured VM behavior**. Retries use alphabetical remaining VMs, since the v0.5.23 artifact lacks top-2 scores; actual semantic top-2 routing remains future work. No real VM execution, commit, rollback, external effects, semantic verification or 2 Copies in 3 is tested. Results are retrospective and synthetic.
