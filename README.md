@@ -224,3 +224,21 @@ python analyze_os_advantage_v051.py --input results/os_advantage_v050.json --out
 Default comparison: TF-IDF vs Semantic Hybrid. The output includes known correct-routing rate difference, unknown rejection difference, paired percentile bootstrap 95% intervals (5000 deterministic resamples) and exploratory exact two-sided McNemar tests. If using other methods, specify `--reference round_robin` or `--candidate keyword`.
 
 **Interpretation boundary:** All these requests were used in previous development iterations and weight/prototype selection. Bootstrap intervals cannot remove this bias, and exploratory p-values must not be treated as confirmatory evidence. For a definitive claim, freeze the algorithms/thresholds and benchmark freshly curated, unseen and independently reviewed test requests. Repeated/warmed wall-clock latency measurements are a separate future experiment; the existing JSON contains only one measured run per method. The previous simulated queue benchmark is not real OS scheduling.
+
+## v0.5.2 — Candidate holdout audit and repeated routing latency
+
+This release adds two independent **evaluation infrastructure** scripts, not new proof of OS superiority.
+
+```powershell
+git pull origin main
+python -m unittest -v test_benchmark_v052.py
+python measure_routing_latency_v052.py --model model/model-sem-internalized-v01575.pt --repeats 10 --warmup 2 --output results/repeated_latency_v052.json
+```
+
+For **externally authored** candidate holdout CSV (CSV columns: `text,label`; do not recycle development prompts):
+
+```powershell
+python audit_holdout_v052.py --holdout data/independent_holdout.csv --output results/holdout_audit_v052.json
+```
+
+The candidate holdout is **not included**; prepare it separately. The auditor checks canonicalized exact overlap and character bigram near-overlap with all available development CSVs. Missing default reference files are reported as failures. Human review of paraphrases and labels is mandatory. **Do not use holdout to optimize gates, blend weights, or prototypes.** The timing script randomizes method order across repetitions with warmup and records per-run variability but still excludes model initialization, does not synchronize GPU asynchronous operations explicitly, and is not an OS benchmark.
