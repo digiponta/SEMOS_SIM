@@ -403,3 +403,13 @@ python evaluate_prospective_v0518.py --prospective data/prospective_new_unseen.c
 ```
 
 Runs Keyword, TF-IDF trained on the old development training set, frozen LLM_SEM semantic-vector candidate router, and its frozen similarity gate on the SHA-256-checked 80-case synthetic set. **All predictors read only the request text**: the manually authored Subject/Predicate/Object/Intent fields and gold labels are reserved for descriptive annotation and scoring. A true Structured Semantic Router requires a separate automatic text-to-SPOI parser, and is **not** evaluated here; feeding gold-side SPOI into a router would leak information. Goals are provisional; samples were newly authored for this project but do not constitute external independent validation. No retuning and no QHA 2 Copies in 3 test.
+
+## v0.5.19 — Frozen Gate Failure Attribution
+
+```powershell
+git pull origin main
+python -m unittest -v test_diagnose_gate_failures_v0519.py
+python diagnose_gate_failures_v0519.py --manifest results/prospective_manifest_v0517_run2.json --comparison results/prospective_comparison_v0518.json --output results/gate_failure_attribution_v0519.json
+```
+
+Replays v0.5.18 **exactly** under frozen LLM_SEM checkpoint and config. For each gold VM, distinguishes gate rejection caused by low fused similarity, low runner-up margin, or both; records margins relative to frozen thresholds, centroid/multi-prototype agreement, and candidate correctness. Gold labels are used only for post-hoc audit, never in routing. This is analysis of already exposed synthetic data, not a new independent score or a tuned Gate. QHA 2 Copies in 3 remains out of scope.
