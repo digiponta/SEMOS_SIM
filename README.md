@@ -127,3 +127,14 @@ Results go to `results/benchmark_v040.json`. You can run without `--model` for t
 
 **Important:** Both bundled CSV files are small, hand-authored **development fixtures**, not a scientifically independent holdout. Do not report their scores as generalization results. For an independent experiment, prepare separate frozen training/validation/test CSV files with columns `text,label` and labels `VM-A`, `VM-B`, `VM-C`, `UNKNOWN`. Target approximately 100 final test cases per label; sample before viewing model predictions, avoid paraphrase duplicates across splits, document dataset provenance, and calibrate thresholds only using the validation set. The runner currently checks only exact overlap and does **not** tune thresholds. The LLM_SEM vector baselines use the same fixed capability profiles, rather than a separately trained embedding model.
 
+
+## v0.4.2 Validation-only calibration
+
+The v0.4.1 diagnostic identifies widespread false rejection at cosine 0.80. **Do not change the deployed gate based on those same 12 cases.** Instead, author a separate validation CSV with columns `text,label` and labels `VM-A`, `VM-B`, `VM-C`, `UNKNOWN`, keeping it distinct from the final benchmark.
+
+```powershell
+python -m unittest -v test_calibrate_gate_v042.py
+python calibrate_gate_v042.py --validation data/my_validation.csv --model model/model-sem-internalized-v01575.pt
+```
+
+This reports a threshold/margin grid search constrained by unknown false-accept rate (default <= 5%), with known accuracy, coverage, misroute rate and reject rate. It does **not** automatically alter `semantic_scheduler.py`, does not guarantee generalization, and rejects use of the bundled `dev_test_v040.csv` fixture by filename. Freeze chosen values before a truly independent final holdout and measure sensitivity across more examples. Note the small-sample uncertainty if validation has few unknowns.
