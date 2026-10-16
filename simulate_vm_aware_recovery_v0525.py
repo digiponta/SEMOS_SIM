@@ -22,7 +22,7 @@ def dispatch(trace,responder=response,max_attempts=3):
     if max_attempts not in (1,2,3):raise ValueError("attempt budget 1..3")
     if not trace["accepted"]:
         return {"request_id":trace["request_id"],"initial":"UNKNOWN",
-          "final":"DISCOVERY","events":[{"state":"GATE_REJECT"},{"state":"DISCOVERY"}]}
+          "final":"DISCOVERY","events":[{"state":"GATE_REJECT"},{"state":"DISCOVERY"}],"retry_count":0}
     first=trace["candidate"]
     if first not in VMS:raise ValueError("Invalid candidate")
     # Neither per-VM score vectors nor top-2 ordering exist in v0.5.23.
