@@ -186,3 +186,15 @@ python compare_gated_prototypes_v045.py --validation data/validation_v043_dev100
 ```
 
 Output: `results/gated_prototypes_v045.json`. Thresholds selected on this same development dataset are **optimistically biased**. Do not use these scores to claim final performance or publish superiority. Keep `semantic_scheduler.py` unchanged until thresholds are frozen and evaluated against a separately curated final holdout. The 25 unknown validation cases make a 5% false-accept limit coarse (one false accept = 4%). The 448 candidate combinations are multiple-comparison selection and increase validation overfitting risk.
+
+## v0.4.6 — Hybrid Consensus routing (development experiment)
+
+`hybrid_router_v046.py` compares two candidate combinations from the same checkpoint and fixed prototypes: **strict consensus** (accept only if centroid and multi top-VM labels agree), and **blend** (weighted combination of each method's three cosine scores; weight defaults to 0.5). Optional `--threshold` and `--margin` are explicit, NOT automatically tuned. Default zero thresholds are exploratory, not calibrated Unknown Gates.
+
+```powershell
+git pull origin main
+python -m unittest -v test_hybrid_router_v046.py
+python hybrid_router_v046.py --validation data/validation_v043_dev100.csv --model model/model-sem-internalized-v01575.pt
+```
+
+Outputs per-method known accuracy, coverage, selective accuracy, Unknown reject rate, and rejection reasons to `results/hybrid_consensus_v046.json`. A disagreement is treated as UNKNOWN/HELD for strict mode, but does not imply a genuinely out-of-domain input. Prior use of these same 100 labels means any model selection based on them is exploratory; create an untouched validation split to choose gates, freeze a candidate, and only then evaluate the independently curated final holdout. No changes are made to production `semantic_scheduler.py`.
