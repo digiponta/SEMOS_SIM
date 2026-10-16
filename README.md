@@ -268,3 +268,13 @@ python evaluate_frozen_holdout_v054.py --holdout data/independent_holdout.csv --
 ```
 
 The command verifies the calibration CSV SHA256, freeze format, matching holdout audit path/size/label counts, and refuses to overwrite existing results. It uses the previously frozen weight=0.7, cosine threshold=0.76 and margin=0.06 **as read from the JSON**, not command-line tuning inputs. Reports baseline Round Robin, Keyword, TF-IDF and frozen Semantic Hybrid. It **does not** claim scientific independence: the 400 prompts were synthetic and developed in the same research context, and the overlap audit cannot prove semantic independence. Do not tune against this evaluation output. Routing latency is single-run wall clock; turnaround is simulated and cannot demonstrate OS superiority.
+
+## v0.5.5 — Post-evaluation error decomposition, not parameter tuning
+
+```powershell
+git pull origin main
+python -m unittest -v test_diagnose_hybrid_holdout_v055.py
+python diagnose_hybrid_holdout_v055.py --holdout data/independent_holdout.csv --frozen config/hybrid_gate_v053_frozen.json --previous results/holdout_benchmark_v054.json --output results/holdout_diagnosis_v055.json
+```
+
+Diagnoses VM-A/B/C/UNKNOWN individually, gated versus ungated Hybrid, low-score versus low-margin rejections, and Centroid/Multi candidate disagreement. Requires the prior v0.5.4 evaluation, matching frozen settings and holdout SHA256, and refuses to overwrite. This is a **post-holdout diagnostic**: keep the same settings and preserve the 400-case results as an evaluation record. Changing thresholds, model or prototypes in response to these results requires a fresh untouched benchmark to assess any claimed improvement.
