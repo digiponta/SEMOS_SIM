@@ -552,3 +552,21 @@ python prepare_hitl_packets_v05291.py --input results/user_authorized_rr_v0526.j
 ```
 
 Tkinter must be available in the local Python installation. If no payload data exists, the GUI cannot show answers. Review decisions do not validate factual truth. For irreversible actions, obtaining review decisions alone does not execute or authorize side effects.
+
+## v0.5.29.3 — User-directed retry and renewed response approval
+
+This incremental simulation processes a `RETRY_HANDOFF_PENDING_VM_EXECUTION` from v0.5.29.1. It **does not call VMs**: a separate reply CSV provides the newly returned actual VM answer. It validates the expected *unvisited* VM, preserves the question, records the previous answer, and always requires a new decision for the new answer. Repeating RETRY uses another unvisited VM (if available); otherwise the state becomes DISCOVERY. Each run outputs a new JSON file and will not overwrite an existing file.
+
+```powershell
+git pull origin main
+python -m unittest -v test_run_hitl_retry_v05293.py
+# Prepare a prior packet with an actual RETRY decision using v0.5.29.1, then:
+python run_hitl_retry_v05293.py --input results/hitl_packets_retry_v05291.json --output results/hitl_retry_waiting_v05293.json
+# External reply CSV: request_id,vm,question,answer
+# E.g. if the packet's retry_vm is VM-B, the row's vm MUST be VM-B.
+python run_hitl_retry_v05293.py --input results/hitl_packets_retry_v05291.json --reply-file data/hitl_retry_replies_v05293.csv --output results/hitl_retry_review_v05293.json
+# Optional explicit next-round review CSV: request_id,decision
+python run_hitl_retry_v05293.py --input results/hitl_packets_retry_v05291.json --reply-file data/hitl_retry_replies_v05293.csv --decision-file data/hitl_retry_decisions_v05293.csv --output results/hitl_retry_decided_v05293.json
+```
+
+Before this, create a genuine RETRY decision using the v0.5.29.2 GUI or another human-controlled CSV. The v0.5.29.2 GUI itself is not yet wired to display replacement answers from v0.5.29.3; this remains follow-up work. Simulation outputs are not evidence of real VM dispatch, which is external to this project milestone.
