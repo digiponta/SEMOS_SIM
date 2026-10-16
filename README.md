@@ -342,3 +342,13 @@ python trace_nested_gate_v0511.py --reference results/nested_topic_gate_v059.jso
 ```
 
 Exactly replays v0.5.9 topic-fold and inner threshold-selection seeds. Records each held-out query's selected candidate VM, fused semantic score, runner-up similarity margin, centroid/multi agreement, known/unknown feature distances, contrast score, guard cutoff, final predicted destination and reason. Requires **exact comparison** of every final prediction and topic with the v0.5.9 source JSON; mismatch raises an exception. This is instrumentation for analysis only, not new independent evidence, and does not modify QHA's 2 Copies in 3 or LLM_SEM model.
+
+## v0.5.12 — Router/Unknown Gate ablation (diagnostic only)
+
+```powershell
+git pull origin main
+python -m unittest -v test_analyze_router_gate_ablation_v0512.py
+python analyze_router_gate_ablation_v0512.py --input results/nested_traces_v0511.json --output results/router_gate_ablation_v0512.json
+```
+
+Separates candidate VM classification accuracy (router-only) from the observed final safety gate. The router-only condition intentionally routes every UNKNOWN request, and an additional gold-label-based oracle measures a theoretical upper-bound decomposition **only**: neither is deployable. Input is verified v0.5.11 trace; no embedding recomputation, changes to frozen settings, guard tuning, final holdout access, or 2 Copies in 3 replication exercise.
