@@ -585,3 +585,19 @@ python hitl_retry_review_gui_v05294.py --input results/hitl_retry_validated_v052
 ```
 
 Review CSV is a human decision record for the replacement answer; `APPROVE` is never inferred. The GUI does not itself advance the state to USER_CONFIRMED; that is a future integration. No actual VM invocation, cryptographic provenance, semantic validation of answer truth, transaction rollback, or irreversible action is present.
+
+## v0.5.29.5 — VM retry reply intake diagnostics
+
+`intake_hitl_retry_v05295.py` diagnoses whether a retry reply is missing, is a blank template row, has the wrong VM/question, or lacks required metadata. It can register an **actual externally obtained VM reply** and overwrite *only* an empty template row for the same request. No VM invocation or fabricated response. Metadata remains unverified self-declaration.
+
+```powershell
+git pull origin main
+python -m unittest -v test_intake_hitl_retry_v05295.py
+python intake_hitl_retry_v05295.py --input results/hitl_retry_handoff_v05293.json --reply-file data/hitl_retry_replies_v05294.csv --diagnose
+# After VM-C has ACTUALLY produced an answer, input the real information:
+python intake_hitl_retry_v05295.py --input results/hitl_retry_handoff_v05293.json --reply-file data/hitl_retry_replies_v05294.csv --intake --request-id EVALA001 --vm VM-C --answer 'ACTUAL_VM_C_ANSWER' --execution-id ACTUAL_RUN_ID --executed-at '2026-10-17T12:00:00+09:00' --source ACTUAL_SOURCE
+python validate_hitl_retry_v05294.py --input results/hitl_retry_handoff_v05293.json --reply-file data/hitl_retry_replies_v05294.csv --output results/hitl_retry_validated_v05295.json
+python hitl_retry_review_gui_v05294.py --input results/hitl_retry_validated_v05295.json --output data/hitl_retry_review_v05295.csv
+```
+
+The capitalized placeholders above are **explanatory only, not valid test data**. The validator tests syntactic provenance and simple placeholder patterns, not factual truth. Use actual VM output and timestamp, and do not claim live VM integration.
