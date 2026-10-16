@@ -63,8 +63,17 @@ class VectorRouter:
         return scores[0][1]
 
 def load_csv(path):
-    with open(path,encoding="utf-8-sig",newline="") as f:
-        rows=list(csv.DictReader(f))
+    raw=Path(path).read_bytes()
+    try:
+        decoded=raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            decoded=raw.decode("cp932")
+            print(f"[encoding] {path}: CP932 (Windows Japanese)")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"CSV encoding unsupported: {path}; use UTF-8 or CP932") from exc
+    import io
+    rows=list(csv.DictReader(io.StringIO(decoded,newline="")))
     if not rows or not all("text" in r and "label" in r for r in rows):
         raise ValueError("CSV must contain nonempty text,label rows")
     for i,r in enumerate(rows,2):
