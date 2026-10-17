@@ -742,3 +742,22 @@ $r.packets[0].rejected_reply_diagnostic | Format-List *
 ```
 
 Rejected answers can contain sensitive data; restrict diagnostic access and retention. The validator threshold remains eight Unicode characters; this feature does not repair poor generations or integrate the full LLM_TRY Unknown Gate.
+
+## v0.6.8 — Native LLM_TRY chat prompt and generation diagnostics
+
+The checkpoint adapter now calls `LLM_TRY.chat.build_prompt([], question, 0)` before `generate_reply` rather than passing a bare question. This uses the real `USER_PREFIX` / `AI_PREFIX` conversation framing with zero history, but **does not** call the complete LLM_TRY semantic router, Unknown Gate, or memory retrieval pipeline. The adapter attaches `generation_diagnostic` (generated token/character counts, model confidence statistics, prompt mode) and `vm_http_transport_v063.py` preserves the diagnostic on accepted or rejected replies. Diagnostic values are unverified information from the backend, not proof of model correctness.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py vm_http_transport_v063.py test_llm_generation_diagnostic_v068.py
+python -m unittest -v test_llm_generation_diagnostic_v068.py test_rejected_reply_diagnostic_v067.py test_llm_try_backend_v066.py
+# Restart the VM-C HTTP backend server to pick up the updated Python adapter.
+# Then submit using an unused output name.
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v068.json --allow-live
+$r = Get-Content results/http_llm_try_v068.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.summary
+$r.packets[0].rejected_reply_diagnostic | Format-List *
+$r.packets[0].generation_diagnostic | Format-List *
+```
+
+Be aware that model inference through the HTTP bridge is an external subprocess and the source still has no authenticated VM identity. The eight-character safety gate remains unchanged.
