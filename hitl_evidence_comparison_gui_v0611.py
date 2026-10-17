@@ -4,6 +4,7 @@ A selection is a review *preference* only, not APPROVE, semantic promotion,
 or a finalizer-compatible decision CSV. Writes a separate JSON draft.
 """
 import argparse,json,hashlib
+from datetime import datetime,timezone
 from pathlib import Path
 
 CHOICES=("GENERATED","RETRIEVED","REJECT_BOTH","HOLD")
@@ -11,7 +12,8 @@ def pending_rows(doc):
     return [p for p in doc.get("packets",[])
       if p.get("status")=="PENDING_USER_REVIEW" and p.get("provenance")
       and isinstance(p.get("evidence_comparison"),dict)]
-def choice_record(packet,choice):
+def choice_record(packet,choice,reason=""):
+    if not isinstance(reason,str) or len(reason)>2000:raise ValueError("Invalid reason")
     if choice not in CHOICES:raise ValueError("Invalid comparison choice")
     if packet.get("status")!="PENDING_USER_REVIEW":raise ValueError("Not pending review")
     ev=packet.get("evidence_comparison")
@@ -25,8 +27,13 @@ def choice_record(packet,choice):
     return {"request_id":packet["request_id"],"selection":choice,
       "status":"HITL_COMPARISON_SELECTION_ONLY",
       "approved":False,"promoted":False,
-      "provenance_verified":False}
-def make_report(input_bytes,packets,choices):
+      "provenance_verified":False,
+      "reason":reason.strip(),
+      "recorded_at":datetime.now(timezone.utc).isoformat(timespec="seconds"),
+      "evidence_relation":ev.get("relation","UNKNOWN"),
+      "selected_answer_source":choice if choice in ("GENERATED","RETRIEVED") else None}
+def make_report(input_bytes,packets,choices,reasons=None):
+    reasons=reasons or {}
     if len({p["request_id"] for p in packets})!=len(packets):
         raise ValueError("Duplicate request IDs")
     ids={p["request_id"] for p in packets}
@@ -34,14 +41,14 @@ def make_report(input_bytes,packets,choices):
     by_id={p["request_id"]:p for p in packets}
     return {"version":"0.6.11","kind":"HITL_EVIDENCE_COMPARISON_DRAFT",
       "input_sha256":hashlib.sha256(input_bytes).hexdigest(),
-      "selections":[choice_record(by_id[rid],choice) for rid,choice in sorted(choices.items())],
+      "selections":[choice_record(by_id[rid],choice,reasons.get(rid,"")) for rid,choice in sorted(choices.items())],
       "limitations":["Not an approval or finalization decision",
        "Does not trigger VM execution, Discovery or Semantic Memory update",
        "Unverified backend provenance; user selection is not fact verification"]}
-def save_draft(output,raw,packets,choices):
+def save_draft(output,raw,packets,choices,reasons=None):
     dst=Path(output)
     # Create-only, never silently overwrite an existing review.
-    data=json.dumps(make_report(raw,packets,choices),ensure_ascii=False,indent=2).encode("utf-8")
+    data=json.dumps(make_report(raw,packets,choices,reasons),ensure_ascii=False,indent=2).encode("utf-8")
     dst.parent.mkdir(parents=True,exist_ok=True)
     with dst.open("xb") as f:f.write(data)
 def main():
@@ -66,7 +73,9 @@ def main():
         ttk.Label(frame,text=label).pack(anchor="w")
         w=tk.Text(frame,height=height,wrap="word");w.pack(fill="both",expand=True,pady=(0,8))
         labels.append(w)
-    current=[0];choices={}
+    ttk.Label(frame,text="選択理由（監査用・未承認）").pack(anchor="w")
+    reason_text=tk.Text(frame,height=3,wrap="word");reason_text.pack(fill="x",pady=(0,8))
+    current=[0];choices={};reasons={}
     def render():
         p=rows[current[0]];e=p["evidence_comparison"]
         g=e.get("generated") or {};ret=e.get("retrieved") or {}
@@ -79,11 +88,13 @@ def main():
             w.config(state="normal");w.delete("1.0","end");w.insert("1.0",value or "(なし)");w.config(state="disabled")
     def select(ch):
         p=rows[current[0]]
-        try:choice_record(p,ch)
+        reason=reason_text.get("1.0","end").strip()
+        try:choice_record(p,ch,reason)
         except ValueError as exc:messagebox.showerror("選択不可",str(exc));return
         if not messagebox.askyesno("記録の確認",f"{p['request_id']}: {ch} を未承認の比較選択として保存しますか？"):return
         updated=dict(choices);updated[p["request_id"]]=ch
-        try:save_draft(a.output,raw,rows,updated)
+        updated_reasons=dict(reasons);updated_reasons[p["request_id"]]=reason
+        try:save_draft(a.output,raw,rows,updated,updated_reasons)
         except FileExistsError:
             messagebox.showerror("保存不可","出力ファイルが既に存在します。新しい --output 名で起動してください。")
             return
