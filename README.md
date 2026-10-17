@@ -799,3 +799,19 @@ $r.packets[0].evidence_comparison | Format-List *
 ```
 
 The `KNOWN` state from v0.6.9 reflects a local exact-text match only, not verified truth. The complete LLM_TRY Unknown Gate and external Discovery remain outside this limited adapter.
+
+## v0.6.11 — HITL evidence-comparison UI (selection draft)
+
+`hitl_evidence_comparison_gui_v0611.py` renders the question, LLM-generated answer, local Semantic Knowledge answer and comparison relation separately in Tkinter. It offers GENERATED / RETRIEVED / REJECT_BOTH / HOLD. Selecting a missing retrieved answer is forbidden. A recorded selection is written as an independent `HITL_EVIDENCE_COMPARISON_DRAFT` JSON with `approved=false` and `promoted=false`; it is deliberately **not** a v0.5.29.x approval CSV, and does not change the original packet, trigger a VM, or update Semantic Memory. A new output filename is required for each saved selection.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- hitl_evidence_comparison_gui_v0611.py test_hitl_evidence_comparison_v0611.py
+python -m unittest -v test_hitl_evidence_comparison_v0611.py
+python hitl_evidence_comparison_gui_v0611.py --input results/http_llm_try_v0610.json --output results/hitl_evidence_selection_v0611.json
+# after choosing in GUI:
+$r = Get-Content results/hitl_evidence_selection_v0611.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.selections | Format-List *
+```
+
+**Important:** this milestone captures a human comparison preference only. Final authorization must remain an independent explicit operation; neither an exact match nor a selected answer implies fact verification.
