@@ -46,6 +46,7 @@ def validate_response(body,request,vm):
     return {"vm":vm,"question":body["question"],"answer":body.get("answer",""),
             "generation_diagnostic":body.get("generation_diagnostic"),
             "semantic_assessment":body.get("semantic_assessment"),
+            "evidence_comparison":body.get("evidence_comparison"),
             "execution_id":body.get("execution_id",""),
             "executed_at":body.get("executed_at",""),
             "source":"unverified-http-loopback"}
@@ -80,6 +81,9 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
         p=dict(packet);p["events"]=list(packet.get("events",[]))+[{"state":"VM_TRANSPORT_ERROR","vm":vm,"error":type(exc).__name__}]
         p["transport_error"]=type(exc).__name__
         return p
+    evidence=reply.get("evidence_comparison")
+    if evidence is not None and (not isinstance(evidence,dict) or evidence.get("relation") not in ("EXACT_MATCH","DIFFERENT","NO_RETRIEVAL")):
+        raise ValueError("Invalid evidence comparison")
     assessment=reply.get("semantic_assessment")
     if assessment is not None:
         if not isinstance(assessment,dict) or assessment.get("state") not in ("KNOWN","UNKNOWN","UNVERIFIED"):
@@ -90,6 +94,7 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
             p["events"]=list(packet.get("events",[]))+[
                 {"state":"LLM_SEMANTIC_UNKNOWN_REJECTED","vm":vm}]
             p["semantic_assessment"]=assessment
+            if evidence is not None:p["evidence_comparison"]=evidence
             p["rejected_reply_diagnostic"]={
                 "answer":reply.get("answer",""),
                 "character_count":len(reply.get("answer","")),
@@ -103,6 +108,7 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
             p["validation_error"]="UNKNOWN_SEMANTIC"
             return p
     result=process(packet,reply)
+    if evidence is not None:result["evidence_comparison"]=evidence
     if result.get("validation_error"):
         # Keep prior packet.answer unchanged: the rejected text is diagnostic only.
         # Never promote rejected content to HITL approval or semantic memory.
