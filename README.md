@@ -829,3 +829,16 @@ python hitl_evidence_comparison_gui_v0611.py --input results/synthetic_evidence_
 ```
 
 The GUI saves one selection per invocation; re-launch using a new output path for another case. The complete LLM_TRY Unknown Gate and a live retrieved-vs-generated disagreement remain future work.
+
+## v0.6.13 — HITL comparison selection audit trail
+
+The HITL comparison GUI now records an optional free-text **reason**, UTC `recorded_at` timestamp, evidence relation and selected answer source alongside the already non-authorizing choice. A generated/retrieved selection, REJECT_BOTH or HOLD still produces a draft-only JSON; `approved=false`, `promoted=false`, `provenance_verified=false`. There is no VM execution, final approval, or Semantic Memory write. This extends the review audit trail but is **not** cryptographically authenticated or tamper-evident. The four cases in v0.6.12 are synthetic; the actual live retrieval-vs-generation divergence experiment remains pending.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- hitl_evidence_comparison_gui_v0611.py test_hitl_comparison_audit_v0613.py
+python -m unittest -v test_hitl_comparison_audit_v0613.py test_hitl_evidence_comparison_v0611.py test_evidence_comparison_cases_v0612.py
+python hitl_evidence_comparison_gui_v0611.py --input results/synthetic_evidence_comparison_v0612.json --output results/evidence_choice_v0613.json
+$r=Get-Content results/evidence_choice_v0613.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.selections | Format-List *
+```
