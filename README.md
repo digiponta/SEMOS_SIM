@@ -886,3 +886,21 @@ $r.packets[0].evidence_comparison.retrieved.experimental_file | Format-List *
 ```
 
 The knowledge content in the fixture remains synthetic. Even if `DIFFERENT` is observed, this is an experimental discrepancy rather than a determination of which answer is true.
+
+## v0.6.16 — Conservative semantic comparison diagnostics
+
+`semantic_comparison_v0616.py` distinguishes exact string identity from uncertain semantic relations. The module computes character bigram Jaccard similarity as a **textual diagnostic only**, not as evidence for entailment, equivalence, complementarity, or contradiction. Its semantic output is `EXACT_MATCH` for identical nonempty answers, otherwise `UNDETERMINED`. The labels `SEMANTICALLY_EQUIVALENT`, `COMPLEMENTARY`, and `CONTRADICTORY` are reserved for future grounded evaluation and are **never inferred from this lexical score**. No missing semantic content is fabricated.
+
+The live HTTP transport attaches `semantic_comparison` to successful, rejected, and unknown-gated cases when `evidence_comparison` exists, enforcing that the generated evidence text matches the actual reply. The HITL GUI shows the semantic label and still records a selection **without** approving it.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- semantic_comparison_v0616.py test_semantic_comparison_v0616.py vm_http_transport_v063.py hitl_evidence_comparison_gui_v0611.py
+python -m unittest -v test_semantic_comparison_v0616.py test_evidence_comparison_v0610.py test_semantic_assessment_v069.py
+# restart the VM-C HTTP server, preserving the experimental knowledge path:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v0616.json --allow-live
+$r=Get-Content results/http_llm_try_v0616.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.packets[0].semantic_comparison | Format-List *
+```
+
+An independent labeled semantic evaluation dataset and an actual entailment classifier are not included in v0.6.16. The source record remains experimental and unverified.
