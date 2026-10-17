@@ -676,3 +676,21 @@ python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v064.js
 ```
 
 No actual VM, inference engine, authenticated identity, production network, or true answer correctness is involved. Use a distinct output path if the file exists.
+
+## v0.6.5 — Subprocess backend bridge (experimental)
+
+`llm_backend_http_v065.py` connects the loopback HTTP server to a separately launched Python backend through a JSON stdin/stdout contract. It validates protocol, request ID, VM name, nonempty answer and mandatory execution metadata; enforces an execution timeout; uses `subprocess.run(..., shell=False)`; and remains answer-only. A successful reply carries `response_kind=EXTERNAL_SUBPROCESS_UNVERIFIED`. No model inference, provenance attestation, or permission for side effects is implied. The supplied `synthetic_llm_backend_v065.py` produces **only a synthetic answer**, not a trained LLM. No LLM_TRY or LLM_SEM runtime has been integrated yet.
+
+```powershell
+git fetch origin
+git switch v0.6.0
+git pull --ff-only origin v0.6.0
+python -m unittest -v test_llm_backend_http_v065.py
+# Terminal 1: synthetic subprocess-backed loopback server
+python llm_backend_http_v065.py --vm VM-C --port 8765 --python (python -c 'import sys; print(sys.executable)') --backend-script (Resolve-Path .\\synthetic_llm_backend_v065.py).Path
+# Terminal 2: only after server starts
+python prepare_vm_transport_fixture_v062.py --output results/synthetic_retry_handoff_v065.json
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v065.json --config config/vm_http_transport_v063.json --output results/http_transport_v065.json --allow-live
+```
+
+A real model backend would need an adapter implementing the same input/output contract. Before connecting one, check the actual inference invocation and model dependencies in LLM_TRY/LLM_SEM. This implementation does not claim VM authenticity; v0.6.3 classifies it as `HTTP_LOOPBACK_UNVERIFIED`.
