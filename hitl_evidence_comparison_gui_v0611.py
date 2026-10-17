@@ -81,7 +81,8 @@ def main():
         g=e.get("generated") or {};ret=e.get("retrieved") or {}
         title.config(text=f"{current[0]+1}/{len(rows)} | {p['request_id']} | {choices.get(p['request_id'],'未選択')}")
         ass=p.get("semantic_assessment") or {}
-        meta.config(text=f"比較: {e.get('relation','不明')} | Semantic: {ass.get('state','不明')} | "
+        cmp=p.get("semantic_comparison") or {}
+        meta.config(text=f"比較: {e.get('relation','不明')} | 意味判定: {cmp.get('semantic_label','未実施')} | Semantic: {ass.get('state','不明')} | "
                          "出所は自己申告・未検証 | 選択は最終承認ではありません")
         for w,value in zip(labels,[p.get("question",""),g.get("answer") or "(なし)",
                                    ret.get("answer") if ret.get("present") else "(検索ヒットなし)"]):
