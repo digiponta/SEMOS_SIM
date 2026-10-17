@@ -79,6 +79,21 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
         p["transport_error"]=type(exc).__name__
         return p
     result=process(packet,reply)
+    if result.get("validation_error"):
+        # Keep prior packet.answer unchanged: the rejected text is diagnostic only.
+        # Never promote rejected content to HITL approval or semantic memory.
+        answer=reply.get("answer","")
+        result["rejected_reply_diagnostic"]={
+            "answer":answer,
+            "character_count":len(answer),
+            "validation_error":result["validation_error"],
+            "source":reply.get("source",""),
+            "source_vm":vm,
+            "execution_id":reply.get("execution_id",""),
+            "executed_at":reply.get("executed_at",""),
+            "trusted":False,
+            "eligible_for_hitl":False,
+        }
     if result["status"]=="PENDING_USER_REVIEW":
         result["transport"]="HTTP_LOOPBACK_UNVERIFIED"
         result["request_envelope"]=req
