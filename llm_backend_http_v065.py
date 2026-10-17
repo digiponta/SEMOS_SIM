@@ -74,9 +74,10 @@ def main():
     p.add_argument("--python",required=True,help="absolute Python executable")
     p.add_argument("--backend-script",required=True,help="absolute path to backend adapter")
     p.add_argument("--timeout",type=float,default=15)
+    p.add_argument("--backend-arg",action="append",default=[],help="repeat to append one argument to backend argv")
     a=p.parse_args()
     if not 1024<=a.port<=65535:p.error("invalid port")
-    argv=[str(Path(a.python).resolve()),str(Path(a.backend_script).resolve())]
+    argv=[str(Path(a.python).resolve()),str(Path(a.backend_script).resolve()),*a.backend_arg]
     if not all(Path(x).is_file() for x in argv):p.error("Missing executable or backend script")
     server=ThreadingHTTPServer(("127.0.0.1",a.port),handler_factory(a.vm,argv,a.timeout))
     print(f"UNVERIFIED external subprocess adapter for {a.vm} on loopback:{a.port}",flush=True)
