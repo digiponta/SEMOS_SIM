@@ -815,3 +815,17 @@ $r.selections | Format-List *
 ```
 
 **Important:** this milestone captures a human comparison preference only. Final authorization must remain an independent explicit operation; neither an exact match nor a selected answer implies fact verification.
+
+## v0.6.12 — Deterministic semantic evidence comparison fixtures
+
+`prepare_evidence_comparison_v0612.py` produces four clearly marked **synthetic** scenarios: EXACT_MATCH, DIFFERENT, NO_RETRIEVAL and UNKNOWN. They are deliberately not actual model outputs, VM responses, or live semantic memory retrievals. UNKNOWN remains `RETRY_HANDOFF_PENDING_VM_EXECUTION` and is excluded from HITL review. The other three states are reviewable, but selecting either answer does not approve or promote it.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- prepare_evidence_comparison_v0612.py test_evidence_comparison_cases_v0612.py
+python -m unittest -v test_evidence_comparison_cases_v0612.py test_hitl_evidence_comparison_v0611.py
+python prepare_evidence_comparison_v0612.py --output results/synthetic_evidence_comparison_v0612.json
+python hitl_evidence_comparison_gui_v0611.py --input results/synthetic_evidence_comparison_v0612.json --output results/evidence_choice_v0612.json
+```
+
+The GUI saves one selection per invocation; re-launch using a new output path for another case. The complete LLM_TRY Unknown Gate and a live retrieved-vs-generated disagreement remain future work.
