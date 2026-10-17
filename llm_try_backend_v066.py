@@ -44,6 +44,18 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
         response=mod.generate_reply(model,tokenizer_obj,prompt,
                     max_new_tokens=max_tokens,temperature=0.0,top_k=1,
                     repetition_penalty=1.0)
+        # v0.6.9: use LLM_TRY's conservative lexical concept gate and
+        # canonical semantic lookup, but do not claim full runtime evaluation.
+        lexical_unknown,concept=mod.pre_generation_unknown_concept(req["question"])
+        knowledge_hit=mod.semantic_knowledge_lookup(req["question"])
+        semantic_state="UNVERIFIED"
+        semantic_reason="raw_model_generation_not_fact_verified"
+        if knowledge_hit and knowledge_hit[1].strip()==response.text.strip():
+            semantic_state="KNOWN"
+            semantic_reason="exact_match_to_local_semantic_knowledge"
+        elif lexical_unknown and not knowledge_hit:
+            semantic_state="UNKNOWN"
+            semantic_reason="llm_try_pre_generation_unknown_concept"
         answer=response.text.strip()
     finally:
         sys.path[:]=old_path
@@ -55,6 +67,9 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
         "response_kind":"LLM_TRY_RAW_GENERATION_UNVERIFIED",
         "model_checkpoint":str(ckpt),"tokenizer":str(tok),
         "unknown_gate_applied":False,"human_approval_required":True,
+        "semantic_assessment":{"state":semantic_state,"reason":semantic_reason,
+            "concept":concept,"knowledge_record_present":bool(knowledge_hit),
+            "full_unknown_gate_applied":False,"verified":False},
         "generation_diagnostic":{"prompt_mode":"llm_try_build_prompt_empty_history",
             "prompt_character_count":len(prompt),"generated_character_count":len(answer),
             "generated_token_count":response.token_count,
