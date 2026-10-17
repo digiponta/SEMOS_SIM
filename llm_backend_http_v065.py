@@ -78,7 +78,7 @@ def main():
     a=p.parse_args()
     if not 1024<=a.port<=65535:p.error("invalid port")
     argv=[str(Path(a.python).resolve()),str(Path(a.backend_script).resolve()),*a.backend_arg]
-    if not all(Path(x).is_file() for x in argv):p.error("Missing executable or backend script")
+    if not all(Path(x).is_file() for x in argv[:2]):p.error("Missing executable or backend script")
     server=ThreadingHTTPServer(("127.0.0.1",a.port),handler_factory(a.vm,argv,a.timeout))
     print(f"UNVERIFIED external subprocess adapter for {a.vm} on loopback:{a.port}",flush=True)
     try:server.serve_forever()
