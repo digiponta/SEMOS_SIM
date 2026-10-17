@@ -8,6 +8,7 @@ import argparse,hashlib,json,socket,urllib.parse,urllib.request,urllib.error,ipa
 from pathlib import Path
 from validate_hitl_retry_v05294 import process
 from vm_transport_v061 import envelope
+from semantic_comparison_v0616 import compare_answers
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):
@@ -84,6 +85,13 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
     evidence=reply.get("evidence_comparison")
     if evidence is not None and (not isinstance(evidence,dict) or evidence.get("relation") not in ("EXACT_MATCH","DIFFERENT","NO_RETRIEVAL")):
         raise ValueError("Invalid evidence comparison")
+    semantic_comparison=None
+    if evidence is not None:
+        generated=(evidence.get("generated") or {}).get("answer")
+        retrieved=(evidence.get("retrieved") or {}).get("answer")
+        if not isinstance(generated,str) or generated!=reply.get("answer"):
+            raise ValueError("Evidence generated text mismatch")
+        semantic_comparison=compare_answers(generated,retrieved)
     assessment=reply.get("semantic_assessment")
     if assessment is not None:
         if not isinstance(assessment,dict) or assessment.get("state") not in ("KNOWN","UNKNOWN","UNVERIFIED"):
@@ -95,6 +103,7 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
                 {"state":"LLM_SEMANTIC_UNKNOWN_REJECTED","vm":vm}]
             p["semantic_assessment"]=assessment
             if evidence is not None:p["evidence_comparison"]=evidence
+            if semantic_comparison is not None:p["semantic_comparison"]=semantic_comparison
             p["rejected_reply_diagnostic"]={
                 "answer":reply.get("answer",""),
                 "character_count":len(reply.get("answer","")),
@@ -109,6 +118,7 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
             return p
     result=process(packet,reply)
     if evidence is not None:result["evidence_comparison"]=evidence
+    if semantic_comparison is not None:result["semantic_comparison"]=semantic_comparison
     if result.get("validation_error"):
         # Keep prior packet.answer unchanged: the rejected text is diagnostic only.
         # Never promote rejected content to HITL approval or semantic memory.
