@@ -725,3 +725,20 @@ python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.js
 ```
 
 The previous checkpoint path is an example only; select the checkpoint actually installed. This may require PyTorch/CUDA and the exact Python packages expected by the current LLM_TRY checkout. At present no local model run has been performed or claimed.
+
+## v0.6.7 — Rejected LLM answer diagnostics
+
+When the v0.5.29.4 validator rejects a **received and correlated** HTTP reply (e.g. `TOO_SHORT`, `MISSING_TEXT`, `PLACEHOLDER`), `vm_http_transport_v063.py` now saves `rejected_reply_diagnostic` with the actual rejected `answer`, Unicode character count, validation error, claimed source VM and execution metadata. The old `packet.answer` is deliberately preserved, the retry remains pending, and rejected text is not eligible for HITL approval or semantic knowledge promotion. This is diagnostic evidence from an **unverified** loopback endpoint, not attested VM provenance. Request correlation errors still fail without admitting a reply.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- vm_http_transport_v063.py test_rejected_reply_diagnostic_v067.py
+python -m unittest -v test_rejected_reply_diagnostic_v067.py test_vm_http_transport_v063.py
+# Use an unused output path while a backend server is listening:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v067.json --allow-live
+# PowerShell:
+$r = Get-Content results/http_llm_try_v067.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.packets[0].rejected_reply_diagnostic | Format-List *
+```
+
+Rejected answers can contain sensitive data; restrict diagnostic access and retention. The validator threshold remains eight Unicode characters; this feature does not repair poor generations or integrate the full LLM_TRY Unknown Gate.
