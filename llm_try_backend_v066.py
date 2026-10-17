@@ -57,6 +57,15 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
             semantic_state="UNKNOWN"
             semantic_reason="llm_try_pre_generation_unknown_concept"
         answer=response.text.strip()
+        retrieved_answer=knowledge_hit[1].strip() if knowledge_hit else None
+        evidence_comparison={
+            "generated":{"answer":answer,"origin":"LLM_TRY_CHECKPOINT"},
+            "retrieved":{"answer":retrieved_answer,"origin":"LLM_TRY_LOCAL_SEMANTIC_KNOWLEDGE",
+                "concept":knowledge_hit[0] if knowledge_hit else None,
+                "present":bool(knowledge_hit),"source_authenticated":False},
+            "relation":"EXACT_MATCH" if retrieved_answer is not None and answer==retrieved_answer
+                else "DIFFERENT" if retrieved_answer is not None else "NO_RETRIEVAL",
+            "verified":False,"requires_human_review":True}
     finally:
         sys.path[:]=old_path
     if not answer:raise ValueError("Empty LLM generation; refused")
@@ -67,6 +76,7 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
         "response_kind":"LLM_TRY_RAW_GENERATION_UNVERIFIED",
         "model_checkpoint":str(ckpt),"tokenizer":str(tok),
         "unknown_gate_applied":False,"human_approval_required":True,
+        "evidence_comparison":evidence_comparison,
         "semantic_assessment":{"state":semantic_state,"reason":semantic_reason,
             "concept":concept,"knowledge_record_present":bool(knowledge_hit),
             "full_unknown_gate_applied":False,"verified":False},
