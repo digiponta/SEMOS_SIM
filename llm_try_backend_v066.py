@@ -40,7 +40,8 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
         tokenizer_obj=mod.Tokenizer.load(str(tok))
         model,_=mod.LanguageModel.load_checkpoint(str(ckpt),device=device)
         if model.vocab_size!=tokenizer_obj.vocab_size:raise ValueError("Vocabulary mismatch")
-        response=mod.generate_reply(model,tokenizer_obj,req["question"],
+        prompt,_selected_history=mod.build_prompt([],req["question"],0)
+        response=mod.generate_reply(model,tokenizer_obj,prompt,
                     max_new_tokens=max_tokens,temperature=0.0,top_k=1,
                     repetition_penalty=1.0)
         answer=response.text.strip()
@@ -53,7 +54,13 @@ def generate(obj,repo,checkpoint,tokenizer,max_tokens=96):
         "executed_at":datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "response_kind":"LLM_TRY_RAW_GENERATION_UNVERIFIED",
         "model_checkpoint":str(ckpt),"tokenizer":str(tok),
-        "unknown_gate_applied":False,"human_approval_required":True}
+        "unknown_gate_applied":False,"human_approval_required":True,
+        "generation_diagnostic":{"prompt_mode":"llm_try_build_prompt_empty_history",
+            "prompt_character_count":len(prompt),"generated_character_count":len(answer),
+            "generated_token_count":response.token_count,
+            "mean_confidence":response.mean_confidence,
+            "min_confidence":response.min_confidence,
+            "mean_top2_margin":response.mean_top2_margin}}
 
 def main():
     p=argparse.ArgumentParser()
