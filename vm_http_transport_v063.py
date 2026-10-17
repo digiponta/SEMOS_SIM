@@ -45,6 +45,7 @@ def validate_response(body,request,vm):
     if body.get("question")!=request["question"]:raise ValueError("Question mismatch")
     return {"vm":vm,"question":body["question"],"answer":body.get("answer",""),
             "generation_diagnostic":body.get("generation_diagnostic"),
+            "semantic_assessment":body.get("semantic_assessment"),
             "execution_id":body.get("execution_id",""),
             "executed_at":body.get("executed_at",""),
             "source":"unverified-http-loopback"}
@@ -79,6 +80,28 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
         p=dict(packet);p["events"]=list(packet.get("events",[]))+[{"state":"VM_TRANSPORT_ERROR","vm":vm,"error":type(exc).__name__}]
         p["transport_error"]=type(exc).__name__
         return p
+    assessment=reply.get("semantic_assessment")
+    if assessment is not None:
+        if not isinstance(assessment,dict) or assessment.get("state") not in ("KNOWN","UNKNOWN","UNVERIFIED"):
+            raise ValueError("Invalid semantic assessment")
+        if assessment["state"]=="UNKNOWN":
+            # Fail closed: unknown responses never become a HITL candidate.
+            p=dict(packet)
+            p["events"]=list(packet.get("events",[]))+[
+                {"state":"LLM_SEMANTIC_UNKNOWN_REJECTED","vm":vm}]
+            p["semantic_assessment"]=assessment
+            p["rejected_reply_diagnostic"]={
+                "answer":reply.get("answer",""),
+                "character_count":len(reply.get("answer","")),
+                "validation_error":"UNKNOWN_SEMANTIC",
+                "source":reply.get("source",""),
+                "source_vm":vm,
+                "execution_id":reply.get("execution_id",""),
+                "executed_at":reply.get("executed_at",""),
+                "trusted":False,"eligible_for_hitl":False,
+                "generation_diagnostic":reply.get("generation_diagnostic")}
+            p["validation_error"]="UNKNOWN_SEMANTIC"
+            return p
     result=process(packet,reply)
     if result.get("validation_error"):
         # Keep prior packet.answer unchanged: the rejected text is diagnostic only.
@@ -96,8 +119,12 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
             "eligible_for_hitl":False,
             "generation_diagnostic":reply.get("generation_diagnostic"),
         }
+    if result.get("validation_error") and assessment is not None:
+        result["semantic_assessment"]=assessment
     if result["status"]=="PENDING_USER_REVIEW":
         result["transport"]="HTTP_LOOPBACK_UNVERIFIED"
+        if assessment is not None:
+            result["semantic_assessment"]=assessment
         if reply.get("generation_diagnostic") is not None:
             result["generation_diagnostic"]=reply["generation_diagnostic"]
         result["request_envelope"]=req
