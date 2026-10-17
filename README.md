@@ -867,3 +867,22 @@ python hitl_evidence_comparison_gui_v0611.py --input results/http_llm_try_v0614.
 ```
 
 Restart the server after changing adapter files; if `$arguments` already has the knowledge flags, do not append them twice. An `EXACT_MATCH` is theoretically possible despite the distinct fixture, so the experiment measures the actual relation instead of asserting a difference. Neither selection nor matching authorizes knowledge promotion. Full LLM_TRY Unknown Gate remains unintegrated.
+
+## v0.6.15 — Conservative Japanese definition query normalization
+
+The standalone experimental `--knowledge-file` lookup now retries the actual LLM_TRY `semantic_knowledge_lookup` for supported questions such as `量子力学とは何ですか` using the canonical `量子力学とは` question form. This addresses the concept extractor's limited suffix patterns without editing LLM_TRY or the source JSONL. An original query is tried first; normalization is limited to explicit definition-question suffixes. The experimental-file metadata records `query_normalized_to` and `retrieval_matched`. No fuzzy or substring-only matching, knowledge write, approval, or claim of truth is added.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py test_semantic_query_normalization_v0615.py
+python -m unittest -v test_semantic_query_normalization_v0615.py test_experimental_knowledge_v0614.py
+# Stop and restart the VM-C HTTP server with --knowledge-file configured.
+# From the client terminal, use a NEW output path:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v0615.json --allow-live
+$r=Get-Content results/http_llm_try_v0615.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.summary
+$r.packets[0].evidence_comparison | Format-List *
+$r.packets[0].evidence_comparison.retrieved.experimental_file | Format-List *
+```
+
+The knowledge content in the fixture remains synthetic. Even if `DIFFERENT` is observed, this is an experimental discrepancy rather than a determination of which answer is true.
