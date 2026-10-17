@@ -782,3 +782,20 @@ $r=Get-Content results/http_llm_try_v069.json -Raw -Encoding UTF8 | ConvertFrom-
 $r.summary
 $r.packets[0].semantic_assessment | Format-List *
 ```
+
+## v0.6.10 — Generated vs retrieved evidence comparison
+
+`llm_try_backend_v066.py` records `evidence_comparison` with separate `generated` and `retrieved` answer fields, plus `relation` (`EXACT_MATCH`, `DIFFERENT`, `NO_RETRIEVAL`). The retrieved field comes solely from LLM_TRY's existing local `semantic_knowledge_lookup` when available; it is **not independently fact-checked or authenticated**. A model-generated response is never reclassified as retrieved. The HTTP adapter preserves this comparison both for normal HITL review and UNKNOWN rejection. No automatic approval or Semantic Memory write is introduced.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py vm_http_transport_v063.py test_evidence_comparison_v0610.py
+python -m unittest -v test_evidence_comparison_v0610.py test_semantic_assessment_v069.py test_llm_generation_diagnostic_v068.py
+# Restart the VM-C HTTP server to load the updated adapter, then use an unused output path:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v0610.json --allow-live
+$r=Get-Content results/http_llm_try_v0610.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.summary
+$r.packets[0].evidence_comparison | Format-List *
+```
+
+The `KNOWN` state from v0.6.9 reflects a local exact-text match only, not verified truth. The complete LLM_TRY Unknown Gate and external Discovery remain outside this limited adapter.
