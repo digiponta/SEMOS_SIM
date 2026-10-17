@@ -26,15 +26,38 @@ def resolve_model_paths(repo,checkpoint,tokenizer):
     if not ckpt.is_file() or not tok.is_file():raise FileNotFoundError("Model or tokenizer missing")
     return root,ckpt,tok
 
+def normalize_definition_query(question):
+    """Conservative Japanese definition-question canonicalization.
+
+    Only normalize established suffixes; no substring search, promotion,
+    or untrusted semantic inference.
+    """
+    import re
+    q=question.strip()
+    m=re.fullmatch(r"(.+?)とは(?:何ですか|なんですか|何でしょうか|何か)[？?]?\s*",q)
+    if not m:return None
+    focus=m.group(1).strip()
+    if not focus or len(focus)>24:return None
+    return focus+"とは"
+
 def experimental_lookup(question,knowledge_file,mod):
     if not knowledge_file:
         return None,None
     path=Path(knowledge_file).resolve(strict=True)
     if not path.is_file():raise ValueError("Experimental knowledge path is not a file")
     digest=hashlib.sha256(path.read_bytes()).hexdigest()
+    # Adapter-side canonical question fallback; never edit the source corpus.
     hit=mod.semantic_knowledge_lookup(question,knowledge_path=path)
+    normalized_question=None
+    if not hit:
+        normalized_question=normalize_definition_query(question)
+        if normalized_question and normalized_question!=question:
+            hit=mod.semantic_knowledge_lookup(normalized_question,knowledge_path=path)
     return hit,{"path":str(path),"sha256":digest,"read_only":True,
-                "experimental":True,"authenticated":False}
+                "experimental":True,"authenticated":False,
+                "query_normalized_to":normalized_question if normalized_question!=question else None,
+                "retrieval_matched":bool(hit)}
+
 
 def generate(obj,repo,checkpoint,tokenizer,max_tokens=96,knowledge_file=None):
     req=read_request(obj)
