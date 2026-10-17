@@ -694,3 +694,34 @@ python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v065.js
 ```
 
 A real model backend would need an adapter implementing the same input/output contract. Before connecting one, check the actual inference invocation and model dependencies in LLM_TRY/LLM_SEM. This implementation does not claim VM authenticity; v0.6.3 classifies it as `HTTP_LOOPBACK_UNVERIFIED`.
+
+## v0.6.6 — LLM_TRY checkpoint raw-generation adapter (experimental)
+
+`llm_try_backend_v066.py` reuses the real `LLM_TRY/chat.py` model-loading and `generate_reply` functions, loading a user-provided tokenizer and model checkpoint; this is **not** a synthetic answer. It is a **raw generation bridge**, not the entire LLM_TRY chat runtime. Specifically, the chat runtime's Unknown Gate, Semantic Memory routing, NDC, evidence provenance and trust policy **are not invoked**. It sets `unknown_gate_applied=false`, and the final answer remains human-review-required. Until a verified guard is integrated, DO NOT treat raw generation as trusted semantic knowledge.
+
+`llm_backend_http_v065.py` now accepts repeatable `--backend-arg` for backend command-line parameters. The subprocess interface and safe loopback transport remain as before. It never authorizes actions.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py test_llm_try_backend_v066.py llm_backend_http_v065.py
+python -m unittest -v test_llm_try_backend_v066.py test_llm_backend_http_v065.py
+# Provide REAL existing paths for these three variables:
+$repo = "C:\Users\inoma\git\misc\LLM_TRY"
+$checkpoint = "$repo\model\model-llm-try-nagato-chat-v94.pt"
+$tokenizer = "$repo\model\tokenizer-v0.7-bpe.json"
+Test-Path $checkpoint
+Test-Path $tokenizer
+# Only run if both paths exist, and with an appropriate LLM_TRY checkout.
+python llm_backend_http_v065.py --vm VM-C --port 8765 --timeout 30 `
+  --python (python -c 'import sys; print(sys.executable)') `
+  --backend-script (Resolve-Path .\llm_try_backend_v066.py).Path `
+  --backend-arg=--repo --backend-arg="$repo" `
+  --backend-arg=--checkpoint --backend-arg="$checkpoint" `
+  --backend-arg=--tokenizer --backend-arg="$tokenizer"
+# In another PowerShell window once the server starts:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json `
+  --config config/vm_http_transport_v063.json `
+  --output results/http_llm_try_v066.json --allow-live
+```
+
+The previous checkpoint path is an example only; select the checkpoint actually installed. This may require PyTorch/CUDA and the exact Python packages expected by the current LLM_TRY checkout. At present no local model run has been performed or claimed.
