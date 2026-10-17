@@ -22,7 +22,8 @@ def invoke_backend(request,command,timeout_seconds=15):
     if len(encoded)>65536:raise ValueError("request too large")
     try:
         completed=subprocess.run(command,input=encoded,stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,timeout=timeout_seconds,check=False,shell=False)
+            stderr=subprocess.PIPE,timeout=timeout_seconds,check=False,shell=False,
+            env={**os.environ,"PYTHONIOENCODING":"utf-8"})
     except subprocess.TimeoutExpired as exc:
         raise TimeoutError("LLM backend timeout") from exc
     if completed.returncode!=0:raise RuntimeError("backend returned nonzero exit code")
