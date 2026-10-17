@@ -842,3 +842,28 @@ python hitl_evidence_comparison_gui_v0611.py --input results/synthetic_evidence_
 $r=Get-Content results/evidence_choice_v0613.json -Raw -Encoding UTF8 | ConvertFrom-Json
 $r.selections | Format-List *
 ```
+
+## v0.6.14 — Real LLM generation vs isolated experimental knowledge lookup
+
+The existing LLM_TRY adapter can now accept `--knowledge-file` to use a **separate read-only experimental JSONL knowledge file** instead of the repository's normal semantic knowledge source. It calls the real LLM_TRY `semantic_knowledge_lookup(question, knowledge_path=...)` and records the experimental file path and SHA-256 as unverified provenance. The new generator `prepare_experimental_knowledge_v0614.py` writes a synthetic local fixture for the concept 量子力学, with a deliberately distinct answer. Only LLM generation and the lookup operation are real in this experiment; the lookup content itself is synthetic and not verified knowledge.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py prepare_experimental_knowledge_v0614.py test_experimental_knowledge_v0614.py
+python -m unittest -v test_experimental_knowledge_v0614.py test_hitl_comparison_audit_v0613.py
+python prepare_experimental_knowledge_v0614.py --output data/experimental_semantic_knowledge_v0614.jsonl
+# Set this BEFORE starting the server:
+$knowledgePath=(Resolve-Path .\data\experimental_semantic_knowledge_v0614.jsonl).Path
+# Existing $arguments is the configured server argv array from v0.6.6.
+$arguments += @("--backend-arg=--knowledge-file","--backend-arg=$knowledgePath")
+python .\llm_backend_http_v065.py @arguments
+# From a SECOND terminal:
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v0614.json --allow-live
+$r=Get-Content results/http_llm_try_v0614.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.summary
+$r.packets[0].evidence_comparison | Format-List *
+# If pending, launch HITL comparison GUI (use a new output path):
+python hitl_evidence_comparison_gui_v0611.py --input results/http_llm_try_v0614.json --output results/evidence_choice_v0614.json
+```
+
+Restart the server after changing adapter files; if `$arguments` already has the knowledge flags, do not append them twice. An `EXACT_MATCH` is theoretically possible despite the distinct fixture, so the experiment measures the actual relation instead of asserting a difference. Neither selection nor matching authorizes knowledge promotion. Full LLM_TRY Unknown Gate remains unintegrated.
