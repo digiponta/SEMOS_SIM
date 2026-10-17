@@ -628,3 +628,18 @@ python mock_vm_transport_v05297.py --input results/hitl_retry_handoff_v05293.jso
 ```
 
 Next: an actual VM transport adapter with explicit endpoint authorization, timeouts, response-to-request correlation, and provenance verification. Existing offline test paths stay isolated from the real adapter.
+
+## v0.6.2 — Reproducible standalone mock fixture
+
+`prepare_vm_transport_fixture_v062.py` creates a one-request **synthetic** retry handoff locally. This avoids reliance on deleted/stashed historical `results/hitl_retry_handoff_v05293.json` files when validating v0.6.1. It is not a restoration of historical user approvals, nor a real VM execution.
+
+```powershell
+git fetch origin
+git switch v0.6.0
+git pull --ff-only origin v0.6.0
+python -m unittest -v test_prepare_vm_transport_fixture_v062.py
+python prepare_vm_transport_fixture_v062.py --output results/synthetic_retry_handoff_v062.json
+python vm_transport_v061.py --input results/synthetic_retry_handoff_v062.json --config config/vm_transport_v061.json --fixture-file data/mock_vm_replies_v05297.csv --output results/vm_transport_synthetic_v062.json
+```
+
+Expected output status count for this minimal fixture: `PENDING_USER_REVIEW: 1` and `transport: MOCK_ONLY`. Use a new output path if the previous report already exists. The existing 40-record historical dataset is not recreated, because its approvals and trace contents must not be fabricated.
