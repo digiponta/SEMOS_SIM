@@ -1,0 +1,17 @@
+{
+  "version": "0.6.1",
+  "vms": {
+    "VM-A": {
+      "transport": "mock",
+      "timeout_ms": 5000
+    },
+    "VM-B": {
+      "transport": "mock",
+      "timeout_ms": 5000
+    },
+    "VM-C": {
+      "transport": "mock",
+      "timeout_ms": 5000
+    }
+  }
+}
