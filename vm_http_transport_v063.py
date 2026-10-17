@@ -44,6 +44,7 @@ def validate_response(body,request,vm):
     if body.get("source_vm")!=vm:raise ValueError("VM identity claim mismatch")
     if body.get("question")!=request["question"]:raise ValueError("Question mismatch")
     return {"vm":vm,"question":body["question"],"answer":body.get("answer",""),
+            "generation_diagnostic":body.get("generation_diagnostic"),
             "execution_id":body.get("execution_id",""),
             "executed_at":body.get("executed_at",""),
             "source":"unverified-http-loopback"}
@@ -93,9 +94,12 @@ def dispatch_live(packet,config,allow_live=False,fetcher=fetch_http):
             "executed_at":reply.get("executed_at",""),
             "trusted":False,
             "eligible_for_hitl":False,
+            "generation_diagnostic":reply.get("generation_diagnostic"),
         }
     if result["status"]=="PENDING_USER_REVIEW":
         result["transport"]="HTTP_LOOPBACK_UNVERIFIED"
+        if reply.get("generation_diagnostic") is not None:
+            result["generation_diagnostic"]=reply["generation_diagnostic"]
         result["request_envelope"]=req
         result["response_envelope"]={"protocol":"semos.vm.v1","request_id":req["request_id"],"source_vm":vm,"source":"unverified-http-loopback"}
     return result
