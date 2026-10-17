@@ -658,3 +658,21 @@ python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.js
 ```
 
 Request JSON protocol: `semos.vm.v1`, fields `request_id`, `target_vm`, `question`, `operation=ANSWER_ONLY`, `side_effects_allowed=false`. Response JSON fields: `protocol`, `request_id`, `source_vm`, `question`, `answer`, `execution_id`, `executed_at`. This milestone supplies the client adapter **only**, not an HTTP VM server, authenticated origin, TLS, or side-effect authorization.
+
+## v0.6.4 — Synthetic loopback HTTP server and end-to-end test
+
+`local_vm_http_server_v064.py` provides a local **synthetic HTTP test server**, not a VM or LLM. Requests to `POST /answer` must use `semos.vm.v1`, `ANSWER_ONLY` and `side_effects_allowed=false`. Replies contain fixed synthetic content, tagged `SYNTHETIC_TEST_ONLY`. `test_local_vm_http_server_v064.py` tests a real HTTP loopback round-trip with the v0.6.3 client. The client records `HTTP_LOOPBACK_UNVERIFIED` and still requires user review.
+
+```powershell
+git fetch origin
+git switch v0.6.0
+git pull --ff-only origin v0.6.0
+python -m unittest -v test_local_vm_http_server_v064.py test_vm_http_transport_v063.py
+python prepare_vm_transport_fixture_v062.py --output results/synthetic_retry_handoff_v064.json
+# Terminal 1: server (stop with Ctrl+C)
+python local_vm_http_server_v064.py --vm VM-C --port 8765
+# Terminal 2: opt-in client after server is running
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v064.json --config config/vm_http_transport_v063.json --output results/http_transport_v064.json --allow-live
+```
+
+No actual VM, inference engine, authenticated identity, production network, or true answer correctness is involved. Use a distinct output path if the file exists.
