@@ -761,3 +761,24 @@ $r.packets[0].generation_diagnostic | Format-List *
 ```
 
 Be aware that model inference through the HTTP bridge is an external subprocess and the source still has no authenticated VM identity. The eight-character safety gate remains unchanged.
+
+## v0.6.9 — Conservative lexical knowledge assessment (experimental)
+
+`llm_try_backend_v066.py` calls the existing LLM_TRY `pre_generation_unknown_concept()` and `semantic_knowledge_lookup()` after raw generation to attach `semantic_assessment`:
+- `UNKNOWN`: conservative lexical concept pre-gate rejects the concept with no semantic retrieval hit.
+- `KNOWN`: the model output exactly matches an existing local canonical knowledge answer; this is **not** external truth verification.
+- `UNVERIFIED`: all remaining responses; generative confidence does not imply known facts.
+All assessments include `full_unknown_gate_applied=false` and `verified=false`. **This does not integrate the full LLM_TRY Unknown Gate or Semantic Memory lifecycle.** It is an initial routing contract, not factual validation.
+
+The HTTP transport now rejects `UNKNOWN` before user-review promotion, preserving the original answer and adding `UNKNOWN_SEMANTIC` with rejected-reply diagnostics. `KNOWN` and `UNVERIFIED` still require explicit HITL review. Older synthetic backends without `semantic_assessment` retain existing behavior.
+
+```powershell
+git fetch origin
+git restore --source=origin/v0.6.0 -- llm_try_backend_v066.py vm_http_transport_v063.py test_semantic_assessment_v069.py
+python -m unittest -v test_semantic_assessment_v069.py test_llm_generation_diagnostic_v068.py test_rejected_reply_diagnostic_v067.py test_llm_try_backend_v066.py
+# Restart the HTTP server, then run with a NEW output filename.
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_llm_try_v069.json --allow-live
+$r=Get-Content results/http_llm_try_v069.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$r.summary
+$r.packets[0].semantic_assessment | Format-List *
+```
