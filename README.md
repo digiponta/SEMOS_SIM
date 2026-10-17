@@ -643,3 +643,18 @@ python vm_transport_v061.py --input results/synthetic_retry_handoff_v062.json --
 ```
 
 Expected output status count for this minimal fixture: `PENDING_USER_REVIEW: 1` and `transport: MOCK_ONLY`. Use a new output path if the previous report already exists. The existing 40-record historical dataset is not recreated, because its approvals and trace contents must not be fabricated.
+
+## v0.6.3 — Explicitly enabled loopback HTTP transport (experimental)
+
+`vm_http_transport_v063.py` adds a separate HTTP adapter; mock transport stays unchanged. By default the HTTP adapter refuses any network call unless `--allow-live` is passed. Configuration (`config/vm_http_transport_v063.json`) permits only `http://127.0.0.1:PORT/answer` or equivalent localhost loopback addresses and bounded timeouts. Redirects and proxy use are disabled; request ID, question, protocol, and claimed source VM must match. Transport failures leave the retry pending. Successful replies remain `PENDING_USER_REVIEW` with `HTTP_LOOPBACK_UNVERIFIED`; claimed VM identity is **not authenticated**. The example config does not mean a listening VM exists.
+
+```powershell
+git fetch origin
+git switch v0.6.0
+git pull --ff-only origin v0.6.0
+python -m unittest -v test_vm_http_transport_v063.py
+# This call requires a real, user-controlled local /answer endpoint; do NOT use until one is running.
+python vm_http_transport_v063.py --input results/synthetic_retry_handoff_v062.json --config config/vm_http_transport_v063.json --output results/http_transport_v063.json --allow-live
+```
+
+Request JSON protocol: `semos.vm.v1`, fields `request_id`, `target_vm`, `question`, `operation=ANSWER_ONLY`, `side_effects_allowed=false`. Response JSON fields: `protocol`, `request_id`, `source_vm`, `question`, `answer`, `execution_id`, `executed_at`. This milestone supplies the client adapter **only**, not an HTTP VM server, authenticated origin, TLS, or side-effect authorization.
