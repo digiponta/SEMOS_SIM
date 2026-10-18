@@ -79,9 +79,16 @@ def semantic_noisy_probabilities(n,observed,noise=0.,channel="phase_damping",rou
  valid=[i for i in range(n) if i not in observed]
  if not valid:raise ValueError("no unobserved candidates")
  raw=d.probabilities();mass=sum(raw[i] for i in valid)
- if mass<=1e-12:raise ArithmeticError("zero unseen mass")
- return {"conditional_probabilities":{str(i):raw[i]/mass for i in valid},
-         "trace":d.trace().real,"purity":d.purity(),"valid_mass":mass}
+ # When all Born probability belongs to excluded (observed/padded) states,
+ # conditioning on unseen states is undefined. Use an explicit classical
+ # uniform fallback, never present it as a quantum measurement.
+ fallback=(mass<=1e-12)
+ probabilities=({str(i):1.0/len(valid) for i in valid} if fallback
+                else {str(i):raw[i]/mass for i in valid})
+ return {"conditional_probabilities":probabilities,
+         "trace":d.trace().real,"purity":d.purity(),"valid_mass":mass,
+         "used_classical_fallback":fallback,"selection_mode":
+         ("uniform_classical_fallback" if fallback else "conditioned_born")}
 
 def benchmark(candidates=16,trials=100,seed=42,rounds=1,noise_levels=(0.,.05,.2,.5,1.)):
  levels=tuple(noise_levels)
@@ -90,7 +97,7 @@ def benchmark(candidates=16,trials=100,seed=42,rounds=1,noise_levels=(0.,.05,.2,
  for kind in ("smooth","shuffled","multimodal"):
   for channel in ("phase_damping","amplitude_damping"):
    for noise in levels:
-    success=0;purities=[]
+    success=0;purities=[];fallbacks=0;minimum_mass=1.
     for t in range(trials):
      v=workload(candidates,seed+t,kind)
      pilot=random.Random(seed+100000+t).sample(range(candidates),min(4,candidates-1))
@@ -103,16 +110,21 @@ def benchmark(candidates=16,trials=100,seed=42,rounds=1,noise_levels=(0.,.05,.2,
       if z<=0:selected=int(key);break
      success+=int(v[selected]==max(v))
      purities.append(x["purity"])
+     fallbacks+=int(x["used_classical_fallback"])
+     minimum_mass=min(minimum_mass,x["valid_mass"])
     result.append({"landscape":kind,"channel":channel,"noise":noise,
                    "trials":trials,"one_step_hit":success/trials,
-                   "mean_purity":sum(purities)/trials})
+                   "mean_purity":sum(purities)/trials,
+                   "fallback_count":fallbacks,"fallback_rate":fallbacks/trials,
+                   "min_valid_mass":minimum_mass})
  return {"version":"0.7.23","kind":"DENSITY_MATRIX_NOISE_STUDY",
          "parameters":{"candidates":candidates,"trials":trials,"seed":seed,"rounds":rounds,"noise_levels":list(levels)},
          "results":result,"limitations":["Classical ideal-density-matrix simulation, not physical quantum hardware",
            "Small registers only (<=4 qubits), no claimed quantum speedup",
            "Each one-step hit is not final 5-call success; reference v0.7.22 for matched baseline",
            "Channel noise is applied independently to every wire after each phase/diffusion round",
-           "Synthetic ring similarity; no production Semantic Memory"]}
+           "Synthetic ring similarity; no production Semantic Memory",
+           "If all probability is on excluded states, selection uses explicitly labeled uniform classical fallback; not a valid conditioned Born measurement"]}
 def main():
  p=argparse.ArgumentParser()
  p.add_argument("--candidates",type=int,default=16)
