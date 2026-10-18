@@ -13,19 +13,19 @@ class IncrementalV079Tests(unittest.TestCase):
   r=compare(5,changed=("C1:S0",))
   self.assertEqual(r["results"][1]["recomputed_second_epoch"],4)
  def test_equal_incremental(self):
-  self.assertTrue(compare(5)["matched_comparison"]["same_recompute"])
+  self.assertTrue(compare(5,changed=("C1:S0",))["matched_comparison"]["same_recompute"])
  def test_correctness(self):
-  self.assertTrue(all(x["correctness_pass"] for x in compare(5)["results"]))
+  self.assertTrue(all(x["correctness_pass"] for x in compare(5,changed=("C1:S0",))["results"]))
  def test_cost(self):
-  self.assertGreater(compare(5)["matched_comparison"]["semantic_minus_dag_cost"],0)
+  self.assertGreater(compare(5,changed=("C1:S0",))["matched_comparison"]["semantic_minus_dag_cost"],0)
  def test_accounting(self):
-  for x in compare(5)["results"]:
+  for x in compare(5,changed=("C1:S0",))["results"]:
    self.assertEqual(x["executed"]+x["reused"],x["requests"])
  def test_avoidable_recompute(self):
   r=compare(5,changed=("C1:S0",))
   self.assertGreater(r["results"][0]["unnecessary_recomputation"],0)
   self.assertEqual(r["results"][1]["unnecessary_recomputation"],0)
- def test_deterministic(self):self.assertEqual(compare(5,seed=7),compare(5,seed=7))
+ def test_deterministic(self):self.assertEqual(compare(5,seed=7,changed=("C1:S0",)),compare(5,seed=7,changed=("C1:S0",)))
  def test_invalid_changed(self):
   with self.assertRaises(ValueError):compare(5,changed=("BAD",))
  def test_bad_order(self):
