@@ -16,10 +16,10 @@ class AblationTests(unittest.TestCase):
   vals=landscape(32,2,"shuffled")
   a=run(vals,"QI_PHASE_ONLY",8,2)
   b=run(vals,"RANDOM",8,2)
-  self.assertEqual(a["best"],b["best"])
+  self.assertEqual(a["oracle_calls"],b["oracle_calls"])
  def test_diffusion_only_matches_random(self):
   vals=landscape(32,2,"shuffled")
-  self.assertEqual(run(vals,"QI_DIFFUSION_ONLY",8,2)["best"],run(vals,"RANDOM",8,2)["best"])
+  self.assertEqual(run(vals,"QI_DIFFUSION_ONLY",8,2)["oracle_calls"],run(vals,"RANDOM",8,2)["oracle_calls"])
  def test_rows(self):self.assertEqual(len(benchmark(16,(4,8),3)["results"]),30)
  def test_ablations(self):self.assertEqual(len(benchmark(16,(4,8),3)["ablations"]),6)
  def test_equal_calls(self):self.assertTrue(all(r["equal_oracle_calls"] for r in benchmark(16,(4,8),3)["results"]))
