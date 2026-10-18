@@ -18,7 +18,7 @@ class QuantumStateTests(unittest.TestCase):
   self.assertAlmostEqual(q.norm(),1.)
  def test_phase_modulus(self):
   q=QuantumRegister(2);q.superpose();old=q.probabilities()
-  q.phase_oracle([0,1,2,3]);self.assertEqual(old,q.probabilities())
+  q.phase_oracle([0,1,2,3]);self.assertTrue(all(abs(a-b)<1e-12 for a,b in zip(old,q.probabilities())))
  def test_diffusion_norm(self):
   q=QuantumRegister(2);q.superpose();q.phase_oracle([math.pi,0,0,0]);q.diffuse()
   self.assertAlmostEqual(q.norm(),1.)
