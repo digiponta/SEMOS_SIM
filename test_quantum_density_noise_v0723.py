@@ -52,4 +52,20 @@ class DensityNoiseTests(unittest.TestCase):
   self.assertEqual(len(benchmark(8,2,42,1,(0,.2))["results"]),12)
  def test_benchmark_purity(self):
   self.assertTrue(all(0<=r["mean_purity"]<=1.000001 for r in benchmark(8,2,42,1,(0,.2))["results"]))
+ def test_full_amplitude_damping_observed_ground_fallback(self):
+  x=semantic_noisy_probabilities(16,{0:.8,3:.2},1.,"amplitude_damping")
+  self.assertTrue(x["used_classical_fallback"])
+  self.assertEqual(x["selection_mode"],"uniform_classical_fallback")
+  self.assertAlmostEqual(x["valid_mass"],0.)
+  self.assertAlmostEqual(sum(x["conditional_probabilities"].values()),1.)
+  self.assertNotIn("0",x["conditional_probabilities"])
+ def test_full_amplitude_damping_unobserved_ground(self):
+  x=semantic_noisy_probabilities(16,{1:.8,3:.2},1.,"amplitude_damping")
+  self.assertFalse(x["used_classical_fallback"])
+  self.assertAlmostEqual(x["conditional_probabilities"]["0"],1.)
+ def test_fallback_count_benchmark(self):
+  rows=benchmark(16,4,42,1,(1.,))["results"]
+  amplified=[x for x in rows if x["channel"]=="amplitude_damping"]
+  self.assertTrue(all("fallback_count" in x for x in amplified))
+  self.assertTrue(all(0<=x["fallback_rate"]<=1 for x in amplified))
 if __name__=="__main__":unittest.main()
