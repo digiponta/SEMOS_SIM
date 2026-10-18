@@ -34,3 +34,12 @@ Zero noise is the ideal baseline. Increasing gamma may reduce coherence/purity b
 
 ## Next
 v0.7.24: demonstrate entanglement and coupled Semantic registers with Bell/controlled gates and partial trace tests. Then v0.7.25: integrate with real Semantic Memory/SPU request dispatch and matched conventional baselines.
+
+
+## Hotfix: zero unseen mass under full amplitude damping
+
+At `gamma=1`, independent amplitude-damping channels collapse the quantum state to the computational basis ground state `|0000>`. If this state was already observed during the pilot, then `sum_{i in unseen} P(i)=0`, so **conditional Born measurement on unseen states is mathematically undefined**. The original code raised `ArithmeticError("zero unseen mass")`.
+
+The updated version implements a **clearly labeled, nonquantum fallback**: uniform random choice among unseen candidates when the quantum valid mass is <=1e-12. It exposes `used_classical_fallback`, `selection_mode`, `valid_mass`, `fallback_count`, `fallback_rate`, and `min_valid_mass` in JSON. This is not a claim that the noisy quantum state itself could have measured one of the excluded states. When interpreting success curves at extreme noise, inspect fallback rate: the algorithm can be entirely classical.
+
+The hotfix adds three regression tests, for 21 total tests. Existing output paths are opened in exclusive mode, so use a new name when re-running, e.g. `results/quantum_density_noise_v0723_fixed.json`.
