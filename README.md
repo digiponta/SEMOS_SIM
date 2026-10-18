@@ -904,3 +904,14 @@ $r.packets[0].semantic_comparison | Format-List *
 ```
 
 An independent labeled semantic evaluation dataset and an actual entailment classifier are not included in v0.6.16. The source record remains experimental and unverified.
+
+
+## Semantic Knowledge Interchange (SKI) v0.1 — Public Editor's Draft
+
+- [SKI Specification v0.1 — 日本語](docs/SKI_SPECIFICATION_v0.1_ja.md)
+- Scope: portable Semantic Data / Semantic Memory assertions, canonical claims, context, provenance, epistemic assessments, lifecycle, revision and retraction events.
+- Profiles proposed: SKI-Core (JSON-LD offline knowledge exchange) and SKI-Exchange (event synchronization).
+- Intended interoperability: LLM_SEM, LLM_TRY, third-party Semantic Memory systems, and Semantic OS.
+- **Status:** independent draft, not an ISO/W3C/JIS standard; canonical vocabulary IRIs, SHACL shapes, reference implementation, licensing and conformance suite are future work.
+- Existing technologies: JSON-LD 1.1, RDF, PROV-O, SHACL; knowledge payload may later be exposed through MCP.
+- The Japanese DOCX edition is a companion artifact and can be added separately to `docs/` as `Semantic_Knowledge_Interchange_Specification_v0.1_ja.docx`.
