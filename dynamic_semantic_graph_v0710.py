@@ -60,7 +60,7 @@ def oracle_outputs(nodes):
     outputs={}
     for n in ordered(nodes):
         x=nodes[n]
-        outputs[n]=digest([n,x["content"],[(d,outputs[d]) for d in sorted(x["deps"])])
+        outputs[n]=digest([n,x["content"],[(d,outputs[d]) for d in sorted(x["deps"])]])
     return outputs
 
 def simulate(original,events,mode,semantic_overhead=.1,lookup_cost=.02,
