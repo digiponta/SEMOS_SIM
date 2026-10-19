@@ -915,3 +915,15 @@ An independent labeled semantic evaluation dataset and an actual entailment clas
 - **Status:** independent draft, not an ISO/W3C/JIS standard; canonical vocabulary IRIs, SHACL shapes, reference implementation, licensing and conformance suite are future work.
 - Existing technologies: JSON-LD 1.1, RDF, PROV-O, SHACL; knowledge payload may later be exposed through MCP.
 - The Japanese DOCX edition is a companion artifact and can be added separately to `docs/` as `Semantic_Knowledge_Interchange_Specification_v0.1_ja.docx`.
+
+
+## SKI v0.2 — Core Data Model, Lifecycle & Distributed Synchronization
+
+- [SKI v0.2 日本語技術仕様草案](docs/SKI_v0.2_Core_Data_Model_Lifecycle_Distributed_Synchronization_ja.md)
+- **SKI-Core:** Semantic Data Format (SDF) を含むClaim、Context、Provenance、Assessmentの共通モデル。
+- **SKI-Lifecycle:** ASSERT / ASSESS / APPROVE / CORRECT / RETRACT と変更履歴。
+- **SKI-Sync:** 3VMの独立Semantic Memory、イベント冪等性、版数・因果関係、障害復旧。
+- **SKI-Internalization:** `/sleep` の知識版数・モデルチェックポイント記録（同期状態とは別）。
+- **SKI-Transport:** TCP/TLSを基本に、RDMAは大容量データ転送の任意アダプタ。
+- This is an **independent proposal / editor's draft**, not a recognized standard; JSON-LD context, SHACL shapes, reference implementation, and conformance suite remain planned.
+- The earlier [SKI v0.1 draft](docs/SKI_SPECIFICATION_v0.1_ja.md) is retained for research history.
